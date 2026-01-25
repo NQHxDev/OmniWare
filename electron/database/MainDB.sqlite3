@@ -1,0 +1,160 @@
+-- Bảng danh mục
+CREATE TABLE IF NOT EXISTS categories (
+   category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+   category_name TEXT NOT NULL UNIQUE,
+   category_slug TEXT NOT NULL UNIQUE,
+   description TEXT,
+   created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng sản phẩm chính (chứa thông tin chung)
+CREATE TABLE IF NOT EXISTS products (
+   product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+   product_name TEXT NOT NULL,
+   category_id INTEGER,
+   barcode TEXT,
+   description TEXT,
+   has_variants INTEGER DEFAULT 0, -- 0: không có biến thể, 1: có biến thể
+   is_active INTEGER DEFAULT 1,
+   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+   FOREIGN KEY (category_id) REFERENCES categories(category_id)
+);
+
+-- Bảng thuộc tính biến thể (màu sắc, size, v.v.)
+CREATE TABLE IF NOT EXISTS attributes (
+   attribute_id INTEGER PRIMARY KEY AUTOINCREMENT,
+   attribute_name TEXT NOT NULL, -- VD: "Màu sắc", "Kích thước", "Chất liệu"
+   attribute_type TEXT NOT NULL, -- "color", "text", "number"
+   is_required INTEGER DEFAULT 0,
+   sort_order INTEGER DEFAULT 0,
+   created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng giá trị thuộc tính
+CREATE TABLE IF NOT EXISTS attribute_values (
+   value_id INTEGER PRIMARY KEY AUTOINCREMENT,
+   attribute_id INTEGER NOT NULL,
+   value_text TEXT NOT NULL, -- VD: "Đỏ", "Xanh", "37", "38"
+   value_color TEXT, -- Mã màu HEX (nếu attribute_type = 'color')
+   sort_order INTEGER DEFAULT 0,
+   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+   FOREIGN KEY (attribute_id) REFERENCES attributes(attribute_id),
+   UNIQUE(attribute_id, value_text)
+);
+
+-- Bảng liên kết sản phẩm với thuộc tính (nếu sản phẩm có biến thể)
+CREATE TABLE IF NOT EXISTS product_attributes (
+   product_id INTEGER NOT NULL,
+   attribute_id INTEGER NOT NULL,
+
+   PRIMARY KEY (product_id, attribute_id),
+   FOREIGN KEY (product_id) REFERENCES products(product_id),
+   FOREIGN KEY (attribute_id) REFERENCES attributes(attribute_id)
+);
+
+-- Bảng biến thể sản phẩm (SKU cụ thể)
+CREATE TABLE IF NOT EXISTS variants (
+   variant_id INTEGER PRIMARY KEY AUTOINCREMENT,
+   product_id INTEGER NOT NULL,
+   sku TEXT UNIQUE, -- Mã SKU duy nhất cho biến thể
+   barcode TEXT UNIQUE, -- Barcode riêng cho biến thể
+   quantity INTEGER DEFAULT 0,
+   cost_price REAL DEFAULT 0,
+   sale_price REAL DEFAULT 0,
+   image_url TEXT,
+   is_active INTEGER DEFAULT 1,
+   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+   FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+-- Bảng liên kết biến thể với giá trị thuộc tính
+CREATE TABLE IF NOT EXISTS variant_values (
+   variant_id INTEGER NOT NULL,
+   attribute_id INTEGER NOT NULL,
+   value_id INTEGER NOT NULL,
+
+   PRIMARY KEY (variant_id, attribute_id),
+   FOREIGN KEY (variant_id) REFERENCES variants(variant_id),
+   FOREIGN KEY (attribute_id) REFERENCES attributes(attribute_id),
+   FOREIGN KEY (value_id) REFERENCES attribute_values(value_id)
+);
+
+-- Bảng đơn vị tính
+CREATE TABLE IF NOT EXISTS units (
+   unit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+   unit_name TEXT NOT NULL UNIQUE, -- "Cái", "Chiếc", "Hộp", "Thùng"
+   unit_symbol TEXT, -- "cái", "chiếc"
+   created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng liên kết sản phẩm với đơn vị
+CREATE TABLE IF NOT EXISTS product_units (
+   product_id INTEGER NOT NULL,
+   unit_id INTEGER NOT NULL,
+   conversion_rate REAL DEFAULT 1, -- Tỷ lệ chuyển đổi
+   is_default INTEGER DEFAULT 0, -- Đơn vị mặc định
+
+   PRIMARY KEY (product_id, unit_id),
+   FOREIGN KEY (product_id) REFERENCES products(product_id),
+   FOREIGN KEY (unit_id) REFERENCES units(unit_id)
+);
+
+-- Bảng nhật ký tồn kho
+CREATE TABLE IF NOT EXISTS stock_logs (
+   log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+   variant_id INTEGER, -- NULL nếu là sản phẩm không có biến thể
+   product_id INTEGER NOT NULL, -- Luôn có product_id
+   change INTEGER NOT NULL, -- + nhập, - xuất
+   type TEXT NOT NULL, -- IMPORT, EXPORT, ADJUST, RETURN
+   quantity REAL NOT NULL DEFAULT 0,
+   balance_after REAL, -- Số lượng tồn kho sau khi thay đổi
+   quantity_in_default_unit REAL, -- Số lượng quy đổi về đơn vị mặc định
+   unit_id INTEGER, -- Đơn vị tính khi nhập/xuất
+   note TEXT,
+   reference_id TEXT, -- Mã phiếu nhập/xuất
+   created_by TEXT,
+   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+   FOREIGN KEY (variant_id) REFERENCES variants(variant_id),
+   FOREIGN KEY (product_id) REFERENCES products(product_id),
+   FOREIGN KEY (unit_id) REFERENCES units(unit_id)
+);
+
+-- Bảng cài đặt
+CREATE TABLE IF NOT EXISTS settings (
+   key TEXT PRIMARY KEY,
+   name TEXT NOT NULL,
+   value TEXT,
+   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Chèn dữ liệu mẫu
+INSERT OR IGNORE INTO units (unit_name, unit_symbol) VALUES
+   ('Cái', 'cái'),
+   ('Chiếc', 'chiếc'),
+   ('Hộp', 'hộp'),
+   ('Thùng', 'thùng'),
+   ('Kg', 'kg'),
+   ('Mét', 'm');
+
+INSERT OR IGNORE INTO attributes (attribute_name, attribute_type) VALUES
+   ('Màu sắc', 'color'),
+   ('Kích thước', 'text'),
+   ('Chất liệu', 'text');
+
+INSERT OR IGNORE INTO settings (key, value) VALUES
+   ('db_version', 'Phiên bản' 'v1.0.0');
+
+-- Tạo indexes để tối ưu performance
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_active ON products(is_active);
+CREATE INDEX IF NOT EXISTS idx_variants_product ON variants(product_id);
+CREATE INDEX IF NOT EXISTS idx_variants_sku ON variants(sku);
+CREATE INDEX IF NOT EXISTS idx_stock_logs_product ON stock_logs(product_id);
+CREATE INDEX IF NOT EXISTS idx_stock_logs_variant ON stock_logs(variant_id);
+CREATE INDEX IF NOT EXISTS idx_stock_logs_date ON stock_logs(created_at);
