@@ -1,6 +1,5 @@
-// @see - https://www.electron.build/configuration/configuration
 {
-   $schema: 'https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json',
+   $schema: 'https://raw.githubusercontent.com',
    appId: 'YourAppID',
    asar: true,
    productName: 'YourAppName',
@@ -31,4 +30,10 @@
       target: ['AppImage'],
       artifactName: '${productName}-Linux-${version}.${ext}',
    },
+   extraResources: [
+      {
+         from: 'resources/Database.sqlite3',
+         to: 'Database.sqlite3',
+      },
+   ],
 }

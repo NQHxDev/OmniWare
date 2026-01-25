@@ -295,12 +295,14 @@ const Products = () => {
                                     <Search className="h-4 w-4 text-gray-400" />
                                  </div>
                                  <input
+                                    type="search"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Tìm biến thể..."
                                     className="w-full h-10 pl-9 pr-3 py-2 border
-                            border-gray-300 rounded-lg text-sm focus:ring-2
-                            focus:ring-gray-900 focus:outline-none transition-all"
+                                       border-gray-300 rounded-lg text-sm focus:ring-2
+                                       focus:ring-gray-900 focus:outline-none transition-all
+                                    "
                                  />
                               </div>
 
@@ -331,6 +333,19 @@ const Products = () => {
                                  <Minus className="h-4 w-4 mr-1.5" />
                                  <span>Xuất</span>
                               </Button>
+
+                              <Button
+                                 variant="secondary"
+                                 disabled={selectedVariantIds.length === 0}
+                                 onClick={() => {
+                                    setStockAction('OUT');
+                                    setShowStockModal(true);
+                                 }}
+                                 className="h-10 px-4 flex items-center justify-center whitespace-nowrap"
+                              >
+                                 <Trash2 className="h-4 w-4 mr-1.5" />
+                                 <span>Xoá</span>
+                              </Button>
                            </div>
 
                            {/* Variant Table */}
@@ -348,8 +363,10 @@ const Products = () => {
                                        />
                                     </th>
                                     <th className="px-4 py-3 text-left font-semibold">Biến thể</th>
-                                    <th className="px-4 py-3 text-left font-semibold">SKU</th>
-                                    <th className="px-4 py-3 text-center font-semibold">Tồn</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Mã SKU</th>
+                                    <th className="px-4 py-3 text-center font-semibold">
+                                       Số lượng
+                                    </th>
                                     <th className="px-4 py-3 text-center font-semibold">
                                        Thao tác
                                     </th>

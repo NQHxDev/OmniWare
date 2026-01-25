@@ -1,0 +1,88 @@
+[
+   {
+      "item_id": 1,
+      "item_name": "Dép ABC",
+      "item_code": "ABC001",
+      "item_type": "product",
+      "item_unit": "Đôi",
+      "item_quantity": 250,
+      "variants": [
+         {
+            "variant_id": 1,
+            "variant_name": "Đỏ - Size 37",
+            "variant_quantity": 40
+         },
+         {
+            "variant_id": 2,
+            "variant_name": "Đỏ - Size 38",
+            "variant_quantity": 50
+         },
+         {
+            "variant_id": 3,
+            "variant_name": "Đỏ - Size 39",
+            "variant_quantity": 60
+         },
+         {
+            "variant_id": 4,
+            "variant_name": "Xanh - Size 37",
+            "variant_quantity": 50
+         },
+         {
+            "variant_id": 5,
+            "variant_name": "Xanh - Size 38",
+            "variant_quantity": 50
+         }
+      ]
+   },
+   {
+      "item_id": 2,
+      "item_name": "Đế PPT",
+      "item_code": "PPT001",
+      "item_type": "material",
+      "item_unit": "Cái",
+      "item_quantity": 250,
+      "variants": [
+         {
+            "variant_id": 1,
+            "variant_name": "Size 37",
+            "variant_quantity": 40
+         },
+         {
+            "variant_id": 2,
+            "variant_name": "Size 38",
+            "variant_quantity": 50
+         },
+         {
+            "variant_id": 3,
+            "variant_name": "Size 39",
+            "variant_quantity": 60
+         },
+         {
+            "variant_id": 4,
+            "variant_name": "Size 37",
+            "variant_quantity": 50
+         },
+         {
+            "variant_id": 5,
+            "variant_name": "Size 38",
+            "variant_quantity": 50
+         }
+      ]
+   },
+   {
+      "item_id": 3,
+      "item_name": "Bao bì",
+      "item_code": "IT001",
+      "item_type": "raw",
+      "item_unit": "Cái",
+      "item_quantity": 250
+   },
+   {
+      "item_id": 4,
+      "item_name": "Keo dán",
+      "item_code": "KD001",
+      "item_type": "raw",
+      "item_unit": "Cái",
+      "item_quantity": 250
+   }
+]
