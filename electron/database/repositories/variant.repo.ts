@@ -1,9 +1,8 @@
 import { getDb } from '..';
 
-const db = getDb();
-
 export const VariantRepository = {
    getByItem(itemId: number) {
+      const db = getDb();
       return db
          .prepare(
             `
@@ -15,6 +14,7 @@ export const VariantRepository = {
    },
 
    create(data: { item_id: number; variant_name: string; variant_code: string; quantity: number }) {
+      const db = getDb();
       return db
          .prepare(
             `
@@ -23,5 +23,10 @@ export const VariantRepository = {
             `
          )
          .run(data);
+   },
+
+   getByItemId(item_id: number) {
+      const db = getDb();
+      return db.prepare(`SELECT * FROM item_variants WHERE item_id = ?`).all(item_id);
    },
 };

@@ -1,8 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Layout from './components/Layout/Layout';
 import Inventory from './pages/Inventory';
+import Settings from './pages/Settings';
 
 function App() {
    return (
@@ -23,7 +24,7 @@ function App() {
                   element={<div className="p-8">Khách hàng (Coming soon)</div>}
                />
                <Route path="/reports" element={<div className="p-8">Reports (Coming soon)</div>} />
-               {/* <Route path="/settings" element={<Settings />} /> */}
+               <Route path="/settings" element={<Settings />} />
             </Routes>
          </Layout>
       </Router>

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Search, Eye, Plus, Minus } from 'lucide-react';
-import Button from '../components/common/Button';
-import Table from '../components/common/Table';
-import Modal from '../components/common/Modal';
+import Button from '../components/Common/Button';
+import Table from '../components/Common/Table';
+import Modal from '../components/Common/Modal';
 
 type Variant = {
    id: number;

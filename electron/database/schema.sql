@@ -1,3 +1,16 @@
+CREATE TABLE units (
+   unit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+   unit_slug TEXT NOT NULL UNIQUE,
+   unit_name TEXT NOT NULL UNIQUE
+);
+
+INSERT INTO units (unit_slug, unit_name) VALUES
+   ('pair', 'Đôi'),
+   ('piece', 'Chiếc'),
+   ('unit', 'Cái'),
+   ('box', 'Hộp'),
+   ('carton', 'Thùng');
+
 CREATE TABLE item_types (
    type_id INTEGER PRIMARY KEY AUTOINCREMENT,
    type_code TEXT NOT NULL UNIQUE,   -- product, material, raw
@@ -14,12 +27,13 @@ CREATE TABLE items (
    item_name TEXT NOT NULL,
    item_code TEXT NOT NULL UNIQUE,
    type_id INTEGER NOT NULL,
-   unit TEXT NOT NULL,
+   unit_id INTEGER NOT NULL,
    total_quantity INTEGER NOT NULL DEFAULT 0,
    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-   FOREIGN KEY (type_id) REFERENCES item_types(type_id)
+   FOREIGN KEY (type_id) REFERENCES item_types(type_id),
+   FOREIGN KEY (unit_id) REFERENCES units(unit_id)
 );
 
 CREATE TABLE item_variants (

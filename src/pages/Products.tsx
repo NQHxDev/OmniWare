@@ -1,69 +1,88 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useMemo, useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit, Trash2, Minus } from 'lucide-react';
-import Button from '../components/common/Button';
-import Table from '../components/common/Table';
-import Select from '../components/common/Select';
-
-type Variant = {
-   id: number;
-   name: string;
-   sku: string;
-   quantity: number;
-};
-
-type Product = {
-   id: number;
-   name: string;
-   category: string;
-   unit: string;
-   variants: Variant[];
-};
-
-type ProductRow = Product & {
-   totalStock: number;
-};
+import Button from '../components/Common/Button';
+import Table from '../components/Common/Table';
+import Select from '../components/Common/Select';
+import { useUnitStore } from '../stores/unit.store';
+import { Item, useItemStore } from '../stores/item.store';
+import { Variant } from '../stores/variant.store';
+import { useVariantStore } from '../stores/variant.store';
 
 const Products = () => {
+   // Search and filter states
    const [search, setSearch] = useState<string>('');
-   const [isModalOpen, setIsModalOpen] = useState(false);
    const [searchTerm, setSearchTerm] = useState('');
-   const [unit, setUnit] = useState('');
 
-   const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(null);
-   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
-   const [showDetail, setShowDetail] = useState<boolean>(false);
-   const [showStockModal, setShowStockModal] = useState<boolean>(false);
-   const [selectedVariantIds, setSelectedVariantIds] = useState<number[]>([]);
-   const [stockAction, setStockAction] = useState<'IN' | 'OUT' | null>(null);
-
-   // Thêm state cho animation
+   // Modal states
+   const [isModalOpen, setIsModalOpen] = useState(false);
    const [isDrawerVisible, setIsDrawerVisible] = useState<boolean>(false);
    const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
-   const products = [
-      {
-         id: 1,
-         name: 'Mẫu ABC',
-         product_code: 'ABC001',
-         category: 'Giày',
-         unit: 'Đôi',
-         variants: [
-            { id: 101, name: 'Đỏ - 37', sku: 'ABC-RED-37', quantity: 50 },
-            { id: 102, name: 'Đỏ - 38', sku: 'ABC-RED-38', quantity: 8 },
-            { id: 103, name: 'Đỏ - 39', sku: 'ABC-RED-39', quantity: 8 },
-            { id: 104, name: 'Đỏ - 40', sku: 'ABC-RED-40', quantity: 8 },
-            {
-               id: 105,
-               name: 'Xanh - 37',
-               sku: 'QD-BLUE-37',
-               quantity: 35,
-            },
-         ],
-         totalStock: 150,
-      },
-   ];
+   // Animation states
+   const [showDetail, setShowDetail] = useState<boolean>(false);
+   const [showStockModal, setShowStockModal] = useState<boolean>(false);
 
-   const headers = ['Tên sản phẩm', 'Mã sản phẩm', 'Số biến thể', 'Số lượng', 'Thao tác'];
+   // Selection states
+   const [selectedProduct, setSelectedProduct] = useState<Item | null>(null);
+   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+   const [selectedVariantIds, setSelectedVariantIds] = useState<number[]>([]);
+   const [stockAction, setStockAction] = useState<'IN' | 'OUT' | null>(null);
+
+   // Data hooks
+   const { units, isLoadingUnit, fetchUnits } = useUnitStore();
+   const { items, page, total, limit, isLoadingItem, fetchPage } = useItemStore();
+   const { variantsByItem, addVariant, fetchByItem } = useVariantStore();
+
+   // From Data
+   const [itemName, setItemName] = useState('');
+   const [itemCode, setItemCode] = useState('');
+   const [unit, setUnit] = useState<string | number | null>(null);
+   const [typeId] = useState(1);
+
+   const [isAddVariantOpen, setIsAddVariantOpen] = useState(false);
+   const [variantName, setVariantName] = useState('');
+   const [variantCode, setVariantCode] = useState('');
+   const [variantQuantity, setVariantQuantity] = useState(0);
+
+   useEffect(() => {
+      fetchUnits();
+   }, [fetchUnits]);
+
+   useEffect(() => {
+      fetchPage(1);
+   }, [fetchPage]);
+
+   const tableData = useMemo(() => {
+      return items.map((item) => ({
+         item_id: item.item_id,
+         item_name: item.item_name,
+         item_code: item.item_code,
+         item_type: item.item_type,
+         unit: '-', // sau này join unit
+         count_variant: item.count_variant || 0,
+         total_quantity: item.total_quantity ?? 0,
+      }));
+   }, [items]);
+
+   const headers = ['Tên sản phẩm', 'Mã sản phẩm', 'Đơn vị', 'Số biến thể', 'Số lượng', 'Thao tác'];
+
+   const unitOptions = useMemo(() => {
+      if (!units || units.length === 0) return [];
+
+      return units
+         .map((unit) => {
+            const id = unit?.unit_id || unit?.unit_id;
+            const name = unit?.unit_name || unit?.unit_slug || '';
+
+            return {
+               label: name,
+               value: id.toString(),
+            };
+         })
+         .filter(Boolean);
+   }, [units]);
 
    const toggleVariant = (id: number) => {
       setSelectedVariantIds((prev) =>
@@ -77,26 +96,100 @@ const Products = () => {
       if (selectedVariantIds.length === filteredVariants.length) {
          setSelectedVariantIds([]);
       } else {
-         setSelectedVariantIds(filteredVariants.map((v: Variant) => v.id));
+         setSelectedVariantIds(filteredVariants.map((v: Variant) => v.variant_id));
+      }
+   };
+
+   const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!itemName.trim()) {
+         alert('Vui lòng nhập tên sản phẩm');
+         return;
+      }
+
+      if (!unit) {
+         alert('Vui lòng chọn đơn vị tính');
+         return;
+      }
+
+      try {
+         await window.api.createItem(
+            itemName,
+            itemCode,
+            typeId, // = 1
+            Number(unit)
+         );
+
+         // reset form
+         setItemName('');
+         setItemCode('');
+         setUnit(null);
+
+         // đóng modal
+         setIsModalOpen(false);
+
+         // reload danh sách
+         await fetchPage(page);
+      } catch (err) {
+         console.error(err);
+         alert('Lỗi khi thêm sản phẩm');
+      }
+   };
+
+   const handleAddVariant = async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!selectedProduct) return;
+
+      if (!variantName.trim()) {
+         alert('Vui lòng nhập tên biến thể');
+         return;
+      }
+
+      try {
+         const res = await window.api.createVariant(
+            selectedProduct.item_id,
+            variantName,
+            variantCode,
+            variantQuantity
+         );
+
+         // cập nhật store
+         useVariantStore.getState().addVariant(selectedProduct.item_id, {
+            variant_id: res.lastInsertRowid,
+            variant_name: variantName,
+            variant_code: variantCode,
+            quantity: variantQuantity,
+         });
+
+         setVariantName('');
+         setVariantCode('');
+         setVariantQuantity(0);
+         setIsAddVariantOpen(false);
+      } catch (err) {
+         console.error(err);
+         alert('Lỗi khi thêm biến thể');
       }
    };
 
    const filteredVariants = useMemo(() => {
       if (!selectedProduct) return [];
 
-      return selectedProduct.variants.filter((v: Variant) => {
-         if (!search) return true;
-         return (
-            v.name.toLowerCase().includes(search.toLowerCase()) ||
-            v.sku.toLowerCase().includes(search.toLowerCase())
-         );
-      });
-   }, [selectedProduct, search]);
+      const variants = variantsByItem[selectedProduct.item_id] || [];
+
+      if (!search) return variants;
+
+      return variants.filter(
+         (v) =>
+            v.variant_name.toLowerCase().includes(search.toLowerCase()) ||
+            v.variant_code.toLowerCase().includes(search.toLowerCase())
+      );
+   }, [selectedProduct, search, variantsByItem]);
 
    // Effect để quản lý animation cho drawer
    useEffect(() => {
       if (showDetail) {
-         // Kích hoạt animation khi mở drawer
          setTimeout(() => {
             setIsDrawerVisible(true);
          }, 10);
@@ -113,7 +206,6 @@ const Products = () => {
       }
    }, [showDetail]);
 
-   // Effect để quản lý animation cho modal
    useEffect(() => {
       if (isModalOpen) {
          setTimeout(() => {
@@ -123,6 +215,10 @@ const Products = () => {
          setIsModalVisible(false);
       }
    }, [isModalOpen]);
+
+   if (isLoadingUnit || isLoadingItem) return <div>Đang tải dữ liệu...</div>;
+
+   const totalPages = Math.ceil(total / limit);
 
    return (
       <div>
@@ -173,43 +269,49 @@ const Products = () => {
          {/* Products Table */}
          <Table
             headers={headers}
-            data={products}
+            data={tableData}
             renderRow={(product) => (
                <tr
-                  key={product.id}
+                  key={product.item_id}
                   className="hover:bg-gray-50/80 transition-colors border-b last:border-0 text-sm"
                >
                   {/* Tên sản phẩm – căn trái */}
                   <td className="px-6 py-4 text-center">
-                     <div className="font-semibold text-gray-900">{product.name}</div>
+                     <div className="font-semibold text-gray-900">{product.item_name}</div>
                   </td>
 
+                  {/* Mã sản phẩm */}
                   <td className="px-6 py-4 text-center">
                      <span
                         className="
                            inline-block
-                           text-xs font-mono text-gray-500
-                           bg-gray-50 px-2 py-1
+                           text-xs font-medium text-gray-600
+                           bg-gray-100 px-2 py-1
                            rounded border border-gray-100
                         "
                      >
-                        {product.product_code}
+                        {product.item_code}
                      </span>
+                  </td>
+
+                  {/* Đơn vị */}
+                  <td className="px-6 py-4 text-center">
+                     <span className="font-medium text-gray-900">{product.unit}</span>
                   </td>
 
                   {/* Số biến thể */}
                   <td className="px-6 py-4 text-center">
-                     <span className="font-medium text-gray-900">{product.variants.length}</span>
+                     <span className="font-medium text-gray-900">{product.count_variant}</span>
                   </td>
 
                   {/* Số lượng */}
                   <td className="px-6 py-4 text-center">
                      <span
                         className={`font-bold ${
-                           product.totalStock > 0 ? 'text-gray-900' : 'text-red-500'
+                           product.total_quantity > 0 ? 'text-gray-900' : 'text-red-500'
                         }`}
                      >
-                        {product.totalStock.toLocaleString()}
+                        {product.total_quantity.toLocaleString()}
                      </span>
                   </td>
 
@@ -219,9 +321,12 @@ const Products = () => {
                         <Button
                            title="Sửa"
                            variant="ghost"
-                           onClick={() => {
+                           onClick={async () => {
+                              setSelectedVariantIds([]);
+                              setSelectedVariant(null);
                               setSelectedProduct(product);
                               setShowDetail(true);
+                              await fetchByItem(product.item_id);
                            }}
                            className="p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-700 rounded-lg"
                         >
@@ -238,6 +343,23 @@ const Products = () => {
                </tr>
             )}
          />
+
+         {/* pagination */}
+         <div className="flex justify-end gap-2 mt-4">
+            <Button variant="secondary" disabled={page === 1} onClick={() => fetchPage(page - 1)}>
+               Trang trước
+            </Button>
+
+            <span className="px-3 py-2 text-sm">Trang {page}</span>
+
+            <Button
+               variant="secondary"
+               disabled={page === totalPages}
+               onClick={() => fetchPage(page + 1)}
+            >
+               Trang sau
+            </Button>
+         </div>
 
          {/* ===== PRODUCT DETAIL DRAWER ===== */}
          {(showDetail || selectedProduct) && (
@@ -262,21 +384,27 @@ const Products = () => {
                   `}
                >
                   <div className="w-screen max-w-3xl">
+                     {selectedProduct && !variantsByItem[selectedProduct.item_id] && (
+                        <div className="py-10 text-center text-gray-500">Đang tải biến thể...</div>
+                     )}
                      {selectedProduct && (
                         <div className="w-full max-w-3xl bg-white h-full p-6 overflow-y-auto">
                            {/* Header */}
                            <div className="flex justify-between items-center mb-6">
                               <div>
                                  <h2 className="text-xl font-semibold text-gray-900">
-                                    {selectedProduct.name}
+                                    {selectedProduct.item_name}
                                  </h2>
                                  <p className="text-sm text-gray-500 mt-0.5">
-                                    {selectedProduct.category} • {selectedProduct.unit}
+                                    {'Chi tiết'} • {'Sản phẩm'}
                                  </p>
                               </div>
 
                               <div className="flex items-center gap-2">
-                                 <Button className="flex items-center">
+                                 <Button
+                                    className="flex items-center"
+                                    onClick={() => setIsAddVariantOpen(true)}
+                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     Thêm biến thể
                                  </Button>
@@ -375,22 +503,24 @@ const Products = () => {
                               <tbody className="divide-y divide-gray-200 bg-white">
                                  {filteredVariants.map((v: Variant) => (
                                     <tr
-                                       key={v.id}
+                                       key={v.variant_id}
                                        className="hover:bg-gray-50 transition-colors text-sm"
                                     >
                                        <td className="px-4 py-3 text-center">
                                           <input
                                              type="checkbox"
-                                             checked={selectedVariantIds.includes(v.id)}
-                                             onChange={() => toggleVariant(v.id)}
+                                             checked={selectedVariantIds.includes(v.variant_id)}
+                                             onChange={() => toggleVariant(v.variant_id)}
                                           />
                                        </td>
 
                                        <td className="px-4 py-3 text-gray-900 font-medium">
-                                          {v.name}
+                                          {v.variant_name}
                                        </td>
 
-                                       <td className="px-4 py-3 text-gray-500 text-xs">{v.sku}</td>
+                                       <td className="px-4 py-3 text-gray-500 text-xs">
+                                          {v.variant_code}
+                                       </td>
 
                                        <td className="px-4 py-3 font-bold text-center">
                                           {v.quantity}
@@ -474,7 +604,7 @@ const Products = () => {
 
                      {/* Content */}
                      <div className="p-6">
-                        <form className="space-y-6">
+                        <form className="space-y-6" onSubmit={handleSubmit}>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div>
                                  <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -482,6 +612,7 @@ const Products = () => {
                                  </label>
                                  <input
                                     type="text"
+                                    onChange={(e) => setItemName(e.target.value)}
                                     placeholder="Ví dụ: Mẫu ABC"
                                     className="
                                        w-full px-3 py-2
@@ -501,6 +632,7 @@ const Products = () => {
                                  </label>
                                  <input
                                     type="text"
+                                    onChange={(e) => setItemCode(e.target.value)}
                                     placeholder="Ví dụ: ABC001"
                                     className="
                                        w-full px-3 py-2
@@ -520,28 +652,17 @@ const Products = () => {
                                     placeholder="Chọn đơn vị"
                                     value={unit}
                                     onChange={setUnit}
-                                    options={[
-                                       { label: 'Đôi', value: '1' },
-                                       { label: 'Cái', value: '2' },
-                                       { label: 'Chiếc', value: '3' },
-                                       { label: 'Hộp', value: '4' },
-                                       { label: 'Thùng', value: '5' },
-                                    ]}
+                                    options={unitOptions}
                                  />
                               </div>
                            </div>
 
-                           <div>
-                              <label className="flex items-center space-x-2">
-                                 <input type="checkbox" className="rounded border-gray-300" />
-                                 <span className="text-sm text-gray-700">
-                                    Sản phẩm có biến thể (màu sắc, kích thước)
-                                 </span>
-                              </label>
-                           </div>
-
                            <div className="pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                              <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+                              <Button
+                                 type="reset"
+                                 variant="secondary"
+                                 onClick={() => setIsModalOpen(false)}
+                              >
                                  Hủy
                               </Button>
                               <Button type="submit">Lưu sản phẩm</Button>
@@ -550,6 +671,82 @@ const Products = () => {
                      </div>
                   </div>
                </div>
+            </div>
+         )}
+
+         {/* Add Variant Modal */}
+         {isAddVariantOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+               <form
+                  onSubmit={handleAddVariant}
+                  className="bg-white rounded-lg w-full max-w-md p-6 space-y-4"
+               >
+                  <h3 className="text-lg font-semibold">Thêm biến thể</h3>
+                  <input
+                     placeholder="Tên biến thể"
+                     value={variantName}
+                     onChange={(e) => setVariantName(e.target.value)}
+                     className="w-full border px-3 py-2
+                        text-sm text-gray-900
+                      border-gray-300 rounded-lg
+                      placeholder:text-gray-400
+                        focus:outline-none
+                        focus:ring-2 focus:ring-gray-900
+                        focus:border-transparent
+                        autofill:bg-white
+                     "
+                  />
+
+                  <input
+                     placeholder="Mã SKU"
+                     value={variantCode}
+                     onChange={(e) => setVariantCode(e.target.value)}
+                     className="w-full border px-3 py-2
+                        text-sm text-gray-900
+                       border-gray-300 rounded-lg
+                       placeholder:text-gray-400
+                        focus:outline-none
+                        focus:ring-2 focus:ring-gray-900
+                        focus:border-transparent
+                        autofill:bg-white
+                     "
+                  />
+
+                  <input
+                     type="number"
+                     min="0"
+                     placeholder="Số lượng ban đầu"
+                     value={variantQuantity}
+                     onChange={(e) => setVariantQuantity(Number(e.target.value))}
+                     className="w-full border px-3 py-2
+                        text-sm text-gray-900
+                        border-gray-300 rounded-lg
+                        placeholder:text-gray-400
+                        focus:outline-none
+                        focus:ring-2 focus:ring-gray-900
+                        focus:border-transparent
+                        autofill:bg-white
+                        [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none
+                        [&::-webkit-inner-spin-button]:appearance-none
+                     "
+                  />
+
+                  <div className="flex justify-end gap-2">
+                     <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => {
+                           setIsAddVariantOpen(false);
+                           setVariantName('');
+                           setVariantCode('');
+                           setVariantQuantity(0);
+                        }}
+                     >
+                        Hủy
+                     </Button>
+                     <Button type="submit">Lưu</Button>
+                  </div>
+               </form>
             </div>
          )}
       </div>

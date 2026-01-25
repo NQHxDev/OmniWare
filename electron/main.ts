@@ -1,8 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { app, BrowserWindow, Menu } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
+import { ipcMain } from 'electron';
+
 import { initDb } from './database';
+
+import { UnitRepository } from './database/repositories/unit.repo';
+import { ItemRepository } from './database/repositories/item.repo';
+import { VariantRepository } from './database/repositories/variant.repo';
+import { initializeSettingsFile, readSettings, writeSettings } from './database/setting.json';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,10 +30,13 @@ function createWindow() {
    win = new BrowserWindow({
       icon: path.join(publicPath, 'favicon.ico'),
       webPreferences: {
-         preload: path.join(currentDir, 'preload.js'),
+         preload: path.join(currentDir, 'preload.mjs'),
+         sandbox: false,
+         contextIsolation: true,
       },
    });
 
+   // win.webContents.openDevTools();
    win.maximize();
 
    win.webContents.on('did-finish-load', () => {
@@ -55,6 +66,45 @@ app.on('activate', () => {
 app.whenReady().then(() => {
    try {
       const { dbPath } = initDb();
+      initializeSettingsFile();
+
+      // Setting
+      ipcMain.handle('read-settings', async () => {
+         return await readSettings();
+      });
+      ipcMain.handle('write-settings', async (_, settings) => {
+         return await writeSettings(settings);
+      });
+
+      ipcMain.handle('units:get-all', () => UnitRepository.getAll());
+      ipcMain.handle('units:update', (_, id, slug, name) => UnitRepository.update(id, slug, name));
+
+      // Item
+      ipcMain.handle('items:create', (_, item_name, item_code, type_id, unit_id) =>
+         ItemRepository.create({ item_name, item_code, type_id, unit_id })
+      );
+      ipcMain.handle('items:get-paged', (_, page, limit) => {
+         return {
+            items: ItemRepository.getPaged({ page, limit }),
+            total: ItemRepository.countAll(),
+         };
+      });
+
+      // Variant
+      ipcMain.handle('variants:get-by-item', (_, itemId: number) =>
+         VariantRepository.getByItemId(itemId)
+      );
+      ipcMain.handle(
+         'variants:create',
+         (_, item_id: number, variant_name: string, variant_code: string, quantity: number) => {
+            return VariantRepository.create({
+               item_id,
+               variant_name,
+               variant_code,
+               quantity: quantity,
+            });
+         }
+      );
    } catch (error) {
       console.error('Khởi tạo Database thất bại:', error);
    }

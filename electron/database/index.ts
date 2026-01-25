@@ -1,10 +1,12 @@
 import { createRequire } from 'module';
+import { Database as DatabaseInstanceType } from 'better-sqlite3';
+
 const require = createRequire(import.meta.url);
-const Database = require('better-sqlite3');
+const Database = require('better-sqlite3') as unknown as typeof import('better-sqlite3');
 
 import { initDatabase } from './migrate';
 
-let db: Database.Database;
+let db: DatabaseInstanceType | null = null;
 let dbPath: string;
 
 export function initDb() {

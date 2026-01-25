@@ -10,8 +10,8 @@ type SelectProps = {
    label?: string;
    placeholder?: string;
    options: SelectOption[];
-   value?: string;
-   onChange?: (value: string) => void;
+   value?: string | number | null;
+   onChange?: (value: number | string | null) => void;
 };
 
 const Select: React.FC<SelectProps> = ({

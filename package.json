@@ -7,7 +7,12 @@
       "dev": "vite",
       "build": "tsc && vite build && electron-builder",
       "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-      "preview": "vite preview"
+      "preview": "vite preview",
+      "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
+      "electron:build": "npm run build && electron-builder",
+      "build:win": "npm run build && electron-builder --win",
+      "build:mac": "npm run build && electron-builder --mac",
+      "build:portable": "npm run build && electron-builder --win --ia32 --portable"
    },
    "build": {
       "appId": "com.warehouse.app",
@@ -21,8 +26,14 @@
       ],
       "win": {
          "target": "nsis",
-         "icon": "public/favicon.ico"
+         "icon": "public/Logo.png"
       },
+      "extraResources": [
+         {
+            "from": "resources/Database.sqlite3",
+            "to": "Database.sqlite3"
+         }
+      ],
       "nsis": {
          "oneClick": false,
          "allowToChangeInstallationDirectory": true,
@@ -36,7 +47,9 @@
       "lucide-react": "^0.563.0",
       "react": "^18.2.0",
       "react-dom": "^18.2.0",
-      "react-router-dom": "^7.13.0"
+      "react-icons": "^5.5.0",
+      "react-router-dom": "^7.13.0",
+      "zustand": "^5.0.10"
    },
    "devDependencies": {
       "@electron/rebuild": "^4.0.2",
