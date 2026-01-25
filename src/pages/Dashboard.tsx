@@ -1,5 +1,4 @@
 import { Package, ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp } from 'lucide-react';
-import Button from '../components/common/Button';
 
 const Dashboard = () => {
    const stats = [
@@ -59,7 +58,6 @@ const Dashboard = () => {
                <h1 className="text-2xl font-semibold text-gray-900">Tổng quan kho hàng</h1>
                <p className="mt-2 text-gray-600">Thống kê và quản lý hàng tồn kho</p>
             </div>
-            <Button>Thêm sản phẩm mới</Button>
          </div>
 
          {/* Stats Grid */}
