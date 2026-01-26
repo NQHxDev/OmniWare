@@ -1,7 +1,10 @@
 {
    "name": "warehouse_app",
+   "author": {
+      "name": "NguyenQuangHung"
+   },
    "private": true,
-   "version": "0.0.0",
+   "version": "1.0.0",
    "type": "module",
    "scripts": {
       "dev": "vite",
@@ -37,7 +40,7 @@
       "nsis": {
          "oneClick": false,
          "allowToChangeInstallationDirectory": true,
-         "shortcutName": "Warehouse App"
+         "shortcutName": "Warehouse Management"
       }
    },
    "dependencies": {

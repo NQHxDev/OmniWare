@@ -19,7 +19,7 @@ export function initDatabase() {
       }
 
       fs.copyFileSync(sourceDb, userDbPath);
-      console.log('Đã copy Database mẫu thành công');
+      console.log('Khởi tạo Database thành công');
    }
 
    return userDbPath;

@@ -1,0 +1,372 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import Button from '@/components/Common/Button';
+import AdvancedStockOperationModal from '@/components/Products/StockOperationModal';
+import { Item } from '@/stores/item.store';
+import { useVariantStore, Variant } from '@/stores/variant.store';
+import { Minus, Plus, Search, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
+type ItemDetailProps = {
+   isDrawerVisible: boolean;
+   selectedProduct: Item;
+   variants: Variant[];
+   page: number;
+
+   search: string;
+   setSearch: (v: string) => void;
+
+   selectedVariantIds: number[];
+   toggleVariant: (id: number) => void;
+   toggleAllVariants: () => void;
+   setSelectedVariantIds: (ids: number[]) => void;
+
+   onClose: () => void;
+   onOpenAddVariant: () => void;
+
+   fetchPage: (page: number) => Promise<void>;
+   onStockIn: () => void;
+   onStockOut: () => void;
+};
+
+export default function ItemDetailModal({
+   isDrawerVisible,
+   selectedProduct,
+   variants,
+   page,
+
+   search,
+   setSearch,
+
+   selectedVariantIds,
+   toggleVariant,
+   toggleAllVariants,
+   setSelectedVariantIds,
+
+   fetchPage,
+   onClose,
+   onOpenAddVariant,
+}: ItemDetailProps) {
+   const [stockModalOpen, setStockModalOpen] = useState(false);
+   const [stockOperationType, setStockOperationType] = useState<'in' | 'out'>('in');
+   const [stockQuantity, setStockQuantity] = useState(0);
+   const [selectedVariantIdForSingle, setSelectedVariantIdForSingle] = useState<number | null>(
+      null
+   );
+   const [isBulkOperation, setIsBulkOperation] = useState(true);
+
+   const { clearByItem, fetchByItem } = useVariantStore();
+
+   const handleStockInClick = () => {
+      if (selectedVariantIds.length === 0) return;
+
+      setStockOperationType('in');
+      setStockQuantity(0);
+      setIsBulkOperation(true);
+      setSelectedVariantIdForSingle(null);
+      setStockModalOpen(true);
+   };
+
+   const handleStockOutClick = () => {
+      if (selectedVariantIds.length === 0) return;
+
+      setStockOperationType('out');
+      setStockQuantity(0);
+      setIsBulkOperation(true);
+      setSelectedVariantIdForSingle(null);
+      setStockModalOpen(true);
+   };
+
+   const handleSingleStockInClick = (variantId: number) => {
+      setStockOperationType('in');
+      setStockQuantity(0);
+      setIsBulkOperation(false);
+      setSelectedVariantIdForSingle(variantId);
+      setStockModalOpen(true);
+   };
+
+   const handleSingleStockOutClick = (variantId: number) => {
+      setStockOperationType('out');
+      setStockQuantity(0);
+      setIsBulkOperation(false);
+      setSelectedVariantIdForSingle(variantId);
+      setStockModalOpen(true);
+   };
+
+   const handleStockConfirm = async () => {
+      if (isBulkOperation) {
+         // Xử lý nhập/xuất kho hàng loạt
+         await window.api.stockMultipleVariants(
+            selectedVariantIds,
+            stockQuantity,
+            stockOperationType
+         );
+
+         await fetchByItem(selectedProduct.item_id);
+      } else {
+         // Xử lý nhập/xuất kho đơn lẻ
+         if (!selectedVariantIdForSingle) return;
+
+         await window.api.stockSingleVariant(
+            selectedVariantIdForSingle,
+            stockQuantity,
+            stockOperationType
+         );
+      }
+
+      clearByItem(selectedProduct.item_id);
+      await fetchByItem(selectedProduct.item_id);
+      await fetchPage(page);
+      // Reset và đóng modal
+      setStockModalOpen(false);
+      setStockQuantity(0);
+      setSelectedVariantIdForSingle(null);
+   };
+
+   const handleDeleteVariants = async () => {
+      try {
+         const variantIdsToDelete = isBulkOperation
+            ? selectedVariantIds
+            : selectedVariantIdForSingle
+              ? [selectedVariantIdForSingle]
+              : [];
+
+         if (variantIdsToDelete.length === 0) return;
+
+         const confirmed = window.confirm(
+            isBulkOperation
+               ? `Bạn có chắc chắn muốn xóa ${selectedVariantIds.length} biến thể đã chọn?`
+               : `Bạn có chắc chắn muốn xóa biến thể này?`
+         );
+
+         if (!confirmed) return;
+
+         // Gọi API xóa
+         await window.api.deleteVariants(variantIdsToDelete);
+         setSelectedVariantIds([]);
+
+         clearByItem(selectedProduct.item_id);
+         await fetchByItem(selectedProduct.item_id);
+         await fetchPage(page);
+         // Đóng modal
+         setStockModalOpen(false);
+         setSelectedVariantIdForSingle(null);
+      } catch {
+         alert('Delete Variant Error');
+      }
+   };
+
+   const filteredVariants = useMemo(() => {
+      if (!search) return variants;
+
+      return variants.filter(
+         (v) =>
+            v.variant_name.toLowerCase().includes(search.toLowerCase()) ||
+            v.variant_code.toLowerCase().includes(search.toLowerCase())
+      );
+   }, [variants, search]);
+
+   const getSelectedCountForModal = () => {
+      if (isBulkOperation) {
+         return selectedVariantIds.length;
+      } else {
+         return 1;
+      }
+   };
+
+   return (
+      <>
+         <div className="fixed inset-0 z-50 overflow-hidden">
+            {/* Backdrop and Transition */}
+            <div
+               className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out ${
+                  isDrawerVisible ? 'opacity-40' : 'opacity-0'
+               }`}
+               onClick={onClose}
+            />
+
+            {/* Drawer */}
+            <div
+               className={`fixed inset-y-0 right-0 transform transition-transform duration-500 ${
+                  isDrawerVisible ? 'translate-x-0' : 'translate-x-full'
+               }`}
+            >
+               <div className="w-screen max-w-3xl bg-white h-full p-6 overflow-y-auto">
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-6">
+                     <div>
+                        <h2 className="text-xl font-semibold">{selectedProduct.item_name}</h2>
+                        <p className="text-sm text-gray-500">Chi tiết • Sản phẩm</p>
+                     </div>
+
+                     <div className="flex items-center gap-2">
+                        <Button className="flex items-center" onClick={onOpenAddVariant}>
+                           <Plus className="h-4 w-4 mr-2" />
+                           Thêm biến thể
+                        </Button>
+                        <Button variant="secondary" onClick={onClose}>
+                           Đóng
+                        </Button>
+                     </div>
+                  </div>
+
+                  {/* Search + Actions */}
+                  <div className="flex items-center gap-3 mb-4">
+                     <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                           <Search className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <input
+                           type="search"
+                           value={search}
+                           onChange={(e) => setSearch(e.target.value)}
+                           placeholder="Tìm biến thể..."
+                           className="
+                              w-full h-10 pl-9 pr-3 py-2 border
+                              border-gray-300 rounded-lg text-sm focus:ring-2
+                              focus:ring-gray-900 focus:outline-none transition-all
+                              placeholder:text-gray-400 focus:border-transparent
+                           "
+                        />
+                     </div>
+
+                     {/* Button Nhập - Hàng loạt */}
+                     <Button
+                        variant="secondary"
+                        disabled={!selectedVariantIds.length}
+                        onClick={handleStockInClick}
+                        className="h-10 px-4 flex items-center justify-center whitespace-nowrap"
+                     >
+                        <Plus className="h-4 w-4 mr-1.5" />
+                        <span>Nhập</span>
+                     </Button>
+
+                     {/* Button Xuất - Hàng loạt */}
+                     <Button
+                        variant="secondary"
+                        disabled={!selectedVariantIds.length}
+                        onClick={handleStockOutClick} // Đã sửa: gọi hàm mở modal
+                        className="h-10 px-4 flex items-center justify-center whitespace-nowrap"
+                     >
+                        <Minus className="h-4 w-4 mr-1.5" />
+                        <span>Xuất</span>
+                     </Button>
+
+                     {/* Button Xoá */}
+                     <Button
+                        variant="secondary"
+                        disabled={!selectedVariantIds.length}
+                        onClick={handleDeleteVariants}
+                        className="h-10 px-4 flex items-center justify-center whitespace-nowrap"
+                     >
+                        <Trash2 className="h-4 w-4 mr-1.5" />
+                        <span>Xoá</span>
+                     </Button>
+                  </div>
+
+                  {/* Variant Table */}
+                  <table className="w-full border border-gray-200 rounded-lg overflow-hidden border-separate border-spacing-0">
+                     <thead className="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider">
+                        <tr>
+                           <th className="px-4 py-3 text-center w-12">
+                              <input
+                                 type="checkbox"
+                                 checked={
+                                    filteredVariants.length > 0 &&
+                                    selectedVariantIds.length === filteredVariants.length
+                                 }
+                                 onChange={toggleAllVariants}
+                              />
+                           </th>
+                           <th className="px-4 py-3 text-left text-gray-500 font-semibold">
+                              Biến thể
+                           </th>
+                           <th className="px-4 py-3 text-left text-gray-500 font-semibold">
+                              Mã SKU
+                           </th>
+                           <th className="px-4 py-3 text-center text-gray-500 font-semibold">
+                              Số lượng
+                           </th>
+                           <th className="px-4 py-3 text-center text-gray-500 font-semibold">
+                              Thao tác
+                           </th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-gray-200 bg-white">
+                        {filteredVariants.map((v: Variant) => (
+                           <tr
+                              key={v.variant_id}
+                              className="hover:bg-gray-50 transition-colors text-sm"
+                           >
+                              <td className="px-4 py-3 text-center">
+                                 <input
+                                    type="checkbox"
+                                    checked={selectedVariantIds.includes(v.variant_id)}
+                                    onChange={() => toggleVariant(v.variant_id)}
+                                 />
+                              </td>
+
+                              <td className="px-4 py-3 text-gray-900 font-medium">
+                                 {v.variant_name}
+                              </td>
+
+                              <td className="px-4 py-3 text-gray-500 text-xs">{v.variant_code}</td>
+
+                              <td className="px-4 py-3 font-bold text-center">{v.quantity}</td>
+
+                              <td className="px-4 py-3">
+                                 <div className="flex items-center justify-center gap-4">
+                                    <div className="flex items-center justify-center gap-3">
+                                       {/* Nút Nhập đơn lẻ */}
+                                       <button
+                                          title="Nhập kho"
+                                          onClick={() => handleSingleStockInClick(v.variant_id)}
+                                          className="
+                              p-2 text-emerald-600
+                              hover:bg-emerald-50
+                              rounded-full
+                              transition-colors
+                              border border-transparent
+                              hover:border-emerald-200
+                            "
+                                       >
+                                          <Plus className="h-4 w-4" />
+                                       </button>
+
+                                       {/* Nút Xuất đơn lẻ */}
+                                       <button
+                                          title="Xuất kho"
+                                          onClick={() => handleSingleStockOutClick(v.variant_id)}
+                                          className="p-2 text-red-600 hover:bg-red-50
+                              rounded-full transition-colors
+                              border border-transparent hover:border-red-200
+                            "
+                                       >
+                                          <Minus className="h-4 w-4" />
+                                       </button>
+                                    </div>
+                                 </div>
+                              </td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               </div>
+            </div>
+         </div>
+
+         {/* Stock Operation Modal */}
+         <AdvancedStockOperationModal
+            isOpen={stockModalOpen}
+            operationType={stockOperationType}
+            quantity={stockQuantity}
+            setQuantity={setStockQuantity}
+            onConfirm={handleStockConfirm}
+            onCancel={() => {
+               setStockModalOpen(false);
+               setSelectedVariantIdForSingle(null);
+            }}
+            selectedCount={getSelectedCountForModal()}
+         />
+      </>
+   );
+}

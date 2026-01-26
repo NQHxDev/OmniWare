@@ -18,6 +18,7 @@ interface Window {
          unit_id: number
       ) => Promise<any>;
       getItemsPaged: (page: number, limit: number) => Promise<any>;
+      deleteItem: (item_id: number) => Promise<any>;
 
       // Variant
       getVariantsByItem: (itemId: number) => Promise<any>;
@@ -28,5 +29,17 @@ interface Window {
          quantity: number
       ) => Promise<any>;
       addVariant: (item_id: number, variant: unknown) => Promise<any>;
+      stockMultipleVariants: (
+         variant_ids: number[],
+         quantity: number,
+         operation: 'in' | 'out'
+      ) => Promise<any>;
+      stockSingleVariant: (
+         variant_id: number,
+         quantity: number,
+         operation: 'in' | 'out'
+      ) => Promise<any>;
+
+      deleteVariants: (variantIdsToDelete: number[]) => Promise<any>;
    };
 }

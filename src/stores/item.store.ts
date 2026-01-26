@@ -6,6 +6,7 @@ export type Item = {
    item_name: string;
    item_code: string;
    item_type: number;
+   unit_name: string;
    total_quantity: number;
    count_variant: number;
 };

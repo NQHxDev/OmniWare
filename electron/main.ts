@@ -33,10 +33,11 @@ function createWindow() {
          preload: path.join(currentDir, 'preload.mjs'),
          sandbox: false,
          contextIsolation: true,
+         spellcheck: false,
       },
    });
 
-   // win.webContents.openDevTools();
+   win.webContents.openDevTools();
    win.maximize();
 
    win.webContents.on('did-finish-load', () => {
@@ -89,6 +90,7 @@ app.whenReady().then(() => {
             total: ItemRepository.countAll(),
          };
       });
+      ipcMain.handle('items:delete', (_, item_id) => ItemRepository.delete(item_id));
 
       // Variant
       ipcMain.handle('variants:get-by-item', (_, itemId: number) =>
@@ -104,6 +106,27 @@ app.whenReady().then(() => {
                quantity: quantity,
             });
          }
+      );
+      ipcMain.handle('variants:delete', (_, variant_ids: number[]) =>
+         VariantRepository.deleteVariants(variant_ids)
+      );
+      ipcMain.handle(
+         'variants:stock-single-variant',
+         (_, variant_id: number, quantity: number, operation: 'in' | 'out') =>
+            VariantRepository.stockSingleVariant({
+               variant_id,
+               quantity,
+               operation,
+            })
+      );
+      ipcMain.handle(
+         'variants:stock-multiple-variant',
+         (_, variant_ids: number[], quantity: number, operation: 'in' | 'out') =>
+            VariantRepository.stockMultipleVariants({
+               variant_ids,
+               quantity,
+               operation,
+            })
       );
    } catch (error) {
       console.error('Khởi tạo Database thất bại:', error);
