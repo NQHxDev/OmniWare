@@ -7,6 +7,7 @@ export interface AppSettings {
    language: 'vi' | 'en';
    autoRefresh: boolean;
    refreshInterval: number;
+   logRetention: number;
 }
 
 interface SettingsStore {
@@ -23,6 +24,7 @@ const defaultSettings: AppSettings = {
    language: 'vi',
    autoRefresh: true,
    refreshInterval: 30,
+   logRetention: 3,
 };
 
 export const useSettingsStore = create<SettingsStore>()(

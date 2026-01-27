@@ -5,6 +5,7 @@ import Layout from './components/Layout/Layout';
 import Inventory from './pages/Inventory';
 import Settings from './pages/Settings';
 import Materials from '@/pages/Materials';
+import Transactions from '@/pages/Transactions';
 
 function App() {
    return (
@@ -15,12 +16,7 @@ function App() {
                <Route path="/products" element={<Products />} />
                <Route path="/materials" element={<Materials />} />
                <Route path="/inventory" element={<Inventory />} />
-               <Route
-                  path="/transactions"
-                  element={
-                     <div className="p-8">Nhập/Xuất kho (Tính năng chưa được phát triển)</div>
-                  }
-               />
+               <Route path="/transactions" element={<Transactions />} />
                <Route path="/settings" element={<Settings />} />
             </Routes>
          </Layout>

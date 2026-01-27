@@ -1,4 +1,8 @@
 import { ipcRenderer, contextBridge } from 'electron';
+import {
+   GetTransactionsParams,
+   CreateTransactionParams,
+} from './database/repositories/transaction.repo';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
@@ -76,4 +80,10 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('variants:stock-single-variant', variant_id, quantity, operation),
    stockMultipleVariants: (variant_ids: number[], quantity: number, operation: 'in' | 'out') =>
       ipcRenderer.invoke('variants:stock-multiple-variant', variant_ids, quantity, operation),
+
+   // Transaction
+   getTransactions: (params: GetTransactionsParams) =>
+      ipcRenderer.invoke('transaction:get-transactions', params),
+   createTransaction: (params: CreateTransactionParams) =>
+      ipcRenderer.invoke('transaction:create', params),
 });

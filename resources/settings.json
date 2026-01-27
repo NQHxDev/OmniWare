@@ -3,5 +3,6 @@
   "theme": "light",
   "language": "vi",
   "autoRefresh": false,
-  "refreshInterval": 30
+  "refreshInterval": 30,
+  "logRetention": 3
 }

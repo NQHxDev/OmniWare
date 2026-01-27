@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /// <reference types="vite/client" />
+
+import {
+   GetTransactionsParams,
+   CreateTransactionParams,
+} from '../electron/database/repositories/transaction.repo';
+
 interface Window {
    api: {
       // Setting
@@ -54,5 +60,9 @@ interface Window {
       ) => Promise<any>;
 
       deleteVariants: (variantIdsToDelete: number[]) => Promise<any>;
+
+      // Transaction
+      getTransactions: (params: GetTransactionsParams) => Promise<any>;
+      createTransaction: (params: CreateTransactionParams) => Promise<any>;
    };
 }

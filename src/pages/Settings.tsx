@@ -281,6 +281,49 @@ const Settings: React.FC = () => {
                               </button>
                            </div>
                         </div>
+
+                        {/* Log retention period */}
+                        <div className="space-y-4">
+                           <label className="block text-sm font-medium text-gray-900 mb-1">
+                              Thời gian lưu Nhật ký
+                           </label>
+                           <p className="text-sm text-gray-600 mb-4">
+                              Hệ thống sẽ tự động dọn dẹp nhật ký cũ sau khoảng thời gian này để tối
+                              ưu dung lượng
+                           </p>
+
+                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                              {[1, 3, 6, 12, 24].map((month) => (
+                                 <button
+                                    key={month}
+                                    onClick={() => handleInputChange('logRetention', month)}
+                                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                                       tempSettings.logRetention === month
+                                          ? 'border-gray-900 bg-gray-50'
+                                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                                    }`}
+                                 >
+                                    <span
+                                       className={`text-lg font-bold ${
+                                          tempSettings.logRetention === month
+                                             ? 'text-gray-900'
+                                             : 'text-gray-500'
+                                       }`}
+                                    >
+                                       {month}
+                                    </span>
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                       Tháng
+                                    </span>
+
+                                    {/* Hiển thị dấu tích khi được chọn */}
+                                    {tempSettings.logRetention === month && (
+                                       <div className="mt-2 w-1.5 h-1.5 rounded-full bg-gray-900" />
+                                    )}
+                                 </button>
+                              ))}
+                           </div>
+                        </div>
                      </div>
                   </div>
 
@@ -498,45 +541,6 @@ const Settings: React.FC = () => {
                               <pre className="text-xs text-gray-600 overflow-x-auto">
                                  {JSON.stringify(settings, null, 2)}
                               </pre>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* Settings Summary */}
-                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                     <div className="border-b border-gray-200 px-6 py-4 bg-gray-50">
-                        <h3 className="text-lg font-semibold text-gray-900">Tổng quan</h3>
-                     </div>
-
-                     <div className="p-6 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                           <div className="space-y-1">
-                              <div className="text-sm text-gray-600">Item mỗi trang</div>
-                              <div className="text-lg font-semibold text-gray-900">
-                                 {settings.limit}
-                              </div>
-                           </div>
-
-                           <div className="space-y-1">
-                              <div className="text-sm text-gray-600">Giao diện</div>
-                              <div className="text-lg font-semibold text-gray-900">
-                                 {settings.theme === 'light' ? 'Sáng' : 'Tối'}
-                              </div>
-                           </div>
-
-                           <div className="space-y-1">
-                              <div className="text-sm text-gray-600">Ngôn ngữ</div>
-                              <div className="text-lg font-semibold text-gray-900">
-                                 {settings.language === 'vi' ? 'Tiếng Việt' : 'English'}
-                              </div>
-                           </div>
-
-                           <div className="space-y-1">
-                              <div className="text-sm text-gray-600">Tự động làm mới</div>
-                              <div className="text-lg font-semibold text-gray-900">
-                                 {settings.autoRefresh ? 'Bật' : 'Tắt'}
-                              </div>
                            </div>
                         </div>
                      </div>

@@ -12,8 +12,9 @@ export const initializeSettingsFile = async () => {
       limit: 8,
       theme: 'light',
       language: 'vi',
-      autoRefresh: true,
+      autoRefresh: false,
       refreshInterval: 30,
+      logRetention: 3,
    };
 
    try {
@@ -23,6 +24,8 @@ export const initializeSettingsFile = async () => {
       // File không tồn tại, tạo mới
       await fs.mkdir(path.dirname(settingsPath), { recursive: true });
       await fs.writeFile(settingsPath, JSON.stringify(defaultSettings, null, 2), 'utf-8');
+
+      console.log('Systems: Create File Setting Success');
    }
 };
 

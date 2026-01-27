@@ -52,7 +52,7 @@ CREATE TABLE stock_history (
    history_id INTEGER PRIMARY KEY AUTOINCREMENT,
    item_id INTEGER NOT NULL,
    variant_id INTEGER NOT NULL,
-   operation TEXT NOT NULL CHECK (operation IN ('in', 'out')),
+   operation TEXT NOT NULL CHECK (operation IN ('create', 'in', 'out', 'delete')),
    quantity INTEGER NOT NULL DEFAULT 0,
    previous_quantity INTEGER NOT NULL DEFAULT 0,
    new_quantity INTEGER NOT NULL DEFAULT 0,

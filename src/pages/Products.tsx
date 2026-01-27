@@ -178,6 +178,13 @@ const Products = () => {
             variantQuantity
          );
 
+         await window.api.createTransaction({
+            type: 'create',
+            itemId: selectedProduct.item_id,
+            variantId: res.lastInsertRowid,
+            quantity: variantQuantity,
+         });
+
          // cập nhật store
          useVariantStore.getState().addVariant(selectedProduct.item_id, {
             variant_id: res.lastInsertRowid,

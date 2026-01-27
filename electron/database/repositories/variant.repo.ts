@@ -227,50 +227,65 @@ export const VariantRepository = {
    deleteVariants(variant_ids: number[]) {
       const db = getDb();
 
-      const transaction = db.transaction((variant_ids) => {
-         // Lấy thông tin về số lượng cần giảm cho từng item
+      // Khai báo transaction. Lưu ý: callback nhận ids
+      const executeDelete = db.transaction((ids: number[]) => {
+         const placeholders = ids.map(() => '?').join(',');
+
+         // Lấy thông tin
          const variants = db
             .prepare(
-               `SELECT item_id, quantity FROM item_variants WHERE variant_id IN (${variant_ids.map(() => '?').join(',')})`
+               `
+               SELECT variant_id, item_id, quantity
+               FROM item_variants
+               WHERE variant_id IN (${placeholders})
+            `
             )
-            .all(...variant_ids);
+            .all(...ids) as Array<{ variant_id: number; item_id: number; quantity: number }>;
 
-         // Gom nhóm theo item_id để cập nhật tổng số lượng
-         const itemChanges = new Map();
-         variants.forEach((variant) => {
-            const { item_id, quantity } = variant as any;
+         if (variants.length === 0) return { success: true, deleted_count: 0 };
+
+         // Gom nhóm thay đổi
+         const itemChanges = new Map<number, number>();
+         variants.forEach(({ item_id, quantity }) => {
             itemChanges.set(item_id, (itemChanges.get(item_id) || 0) - quantity);
          });
 
-         // Xóa các biến thể
-         db.prepare(
-            `DELETE FROM item_variants WHERE variant_id IN (${variant_ids.map(() => '?').join(',')})`
-         ).run(...variant_ids);
+         // Ghi history
+         const insertHistory = db.prepare(`
+            INSERT INTO stock_history (
+               operation,
+               item_id,
+               variant_id,
+               quantity,
+               previous_quantity,
+               new_quantity,
+               created_at
+            )
+            VALUES ('delete', ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
+         `);
 
-         // Cập nhật tổng số lượng cho từng item
-         for (const [item_id, change] of itemChanges.entries()) {
-            db.prepare(
-               `
-            UPDATE items
-            SET total_quantity = total_quantity + ?,
-              updated_at = CURRENT_TIMESTAMP
-            WHERE item_id = ?
-          `
-            ).run(change, item_id);
+         for (const v of variants) {
+            insertHistory.run(v.item_id, v.variant_id, v.quantity, v.quantity);
          }
 
-         // Xóa lịch sử liên quan
-         db.prepare(
-            `DELETE FROM stock_history WHERE variant_id IN (${variant_ids.map(() => '?').join(',')})`
-         ).run(...variant_ids);
+         // Xóa variants
+         db.prepare(`DELETE FROM item_variants WHERE variant_id IN (${placeholders})`).run(...ids);
 
-         return {
-            success: true,
-            deleted_count: variant_ids.length,
-            item_changes: Object.fromEntries(itemChanges),
-         };
+         // Update Items
+         const updateItem = db.prepare(`
+            UPDATE items
+            SET total_quantity = total_quantity + ?,
+               updated_at = CURRENT_TIMESTAMP
+            WHERE item_id = ?
+         `);
+
+         for (const [item_id, change] of itemChanges.entries()) {
+            updateItem.run(change, item_id);
+         }
+
+         return { success: true, deleted_count: variants.length };
       });
 
-      return transaction(variant_ids);
+      return executeDelete(variant_ids);
    },
 };

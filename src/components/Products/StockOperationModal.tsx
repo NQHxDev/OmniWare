@@ -38,14 +38,26 @@ export default function StockOperationModal({
 
             <div className="space-y-4">
                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                      Số lượng {isStockIn ? 'nhập' : 'xuất'}
                   </label>
                   <input
                      type="number"
                      min="0"
-                     value={quantity}
-                     onChange={(e) => setQuantity(Math.max(0, parseInt(e.target.value) || 0))}
+                     value={quantity === 0 ? '' : quantity}
+                     onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                           setQuantity(0);
+                           return;
+                        }
+                        // Chỉ cho phép nhập số
+                        const numValue = Number(val);
+                        if (!isNaN(numValue)) {
+                           setQuantity(Math.max(0, parseInt(val) || 0));
+                        }
+                     }}
+                     placeholder="Nhập số lượng"
                      className="
                         w-full border px-3 py-2
                         text-sm text-gray-900
@@ -73,7 +85,12 @@ export default function StockOperationModal({
             </div>
 
             <div className="flex flex-col gap-3">
-               <Button onClick={onConfirm} className={`w-full justify-center ${buttonColor}`}>
+               <Button
+                  type="submit"
+                  onClick={onConfirm}
+                  className={`w-full justify-center ${buttonColor}`}
+                  disabled={quantity === 0}
+               >
                   {buttonText}
                </Button>
 

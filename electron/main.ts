@@ -2,6 +2,7 @@
 import { app, BrowserWindow, Menu } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { getDb } from './database/index';
 
 import { ipcMain } from 'electron';
 
@@ -11,6 +12,11 @@ import { UnitRepository } from './database/repositories/unit.repo';
 import { ItemRepository } from './database/repositories/item.repo';
 import { VariantRepository } from './database/repositories/variant.repo';
 import { initializeSettingsFile, readSettings, writeSettings } from './database/setting.json';
+import {
+   GetTransactionsParams,
+   CreateTransactionParams,
+   TransactionRepository,
+} from './database/repositories/transaction.repo';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,10 +70,32 @@ app.on('activate', () => {
    }
 });
 
-app.whenReady().then(() => {
+export const cleanupOldLogs = (retentionMonths: number) => {
+   if (!retentionMonths || retentionMonths <= 0) return;
+
+   const db = getDb();
+
+   const stmt = db.prepare(`
+      DELETE FROM stock_history
+      WHERE created_at < datetime('now', '-' || ? || ' months')
+   `);
+
+   const result = stmt.run(retentionMonths);
+
+   console.log(
+      `[LogCleanup] Deleted ${result.changes} log(s) older than ${retentionMonths} month(s)`
+   );
+};
+
+app.whenReady().then(async () => {
    try {
       const { dbPath } = initDb();
       initializeSettingsFile();
+      const settings = await readSettings();
+
+      if (settings?.logRetention !== undefined) {
+         cleanupOldLogs(settings.logRetention);
+      }
 
       // Setting
       ipcMain.handle('read-settings', async () => {
@@ -137,6 +165,14 @@ app.whenReady().then(() => {
                quantity,
                operation,
             })
+      );
+
+      // Transaction
+      ipcMain.handle('transaction:get-transactions', (_, params: GetTransactionsParams) =>
+         TransactionRepository.getTransactions(params)
+      );
+      ipcMain.handle('transaction:create', (_, params: CreateTransactionParams) =>
+         TransactionRepository.createTransaction(params)
       );
    } catch (error) {
       console.error('Khởi tạo Database thất bại:', error);
