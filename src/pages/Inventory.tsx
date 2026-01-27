@@ -434,7 +434,7 @@ const Inventory = () => {
                </div>
 
                {/* Pagination - Giữ nguyên phần phân trang */}
-               {filteredItems.length > 0 && (
+               {filteredItems.length >= limit && (
                   <div className="flex justify-end gap-2 mt-6">
                      <Button
                         variant="secondary"

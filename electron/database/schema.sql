@@ -6,10 +6,16 @@ CREATE TABLE units (
 
 INSERT INTO units (unit_slug, unit_name) VALUES
    ('pair', 'Đôi'),
-   ('piece', 'Chiếc'),
    ('unit', 'Cái'),
+   ('carton', 'Thùng'),
+   ('roll', 'Cuộn'),
    ('box', 'Hộp'),
-   ('carton', 'Thùng');
+   ('bag', 'Túi'),
+   ('kg', 'Kilogram'),
+   ('ton', 'Tấn'),
+   ('liter', 'Lít'),
+   ('meter', 'Mét'),
+   ('m2', 'Mét vuông');
 
 CREATE TABLE item_types (
    type_id INTEGER PRIMARY KEY AUTOINCREMENT,

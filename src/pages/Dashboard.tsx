@@ -1,55 +1,84 @@
-import { Package, ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp } from 'lucide-react';
+import { Archive, CheckCircle, Package, RefreshCw, Warehouse } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const Dashboard = () => {
+   const [counts, setCounts] = useState({
+      products: 0,
+      materials: 0,
+      inventory: 0,
+      transactions: 0,
+   });
+
+   useEffect(() => {
+      const fetchData = async () => {
+         const [pCount, mCount, iCount, tCount] = await Promise.all([
+            window.api.countItem(1),
+            window.api.countItem(2),
+            window.api.countItem(3),
+            window.api.getTodayNetFlow(),
+         ]);
+
+         setCounts({
+            products: pCount.total,
+            materials: mCount.total,
+            inventory: iCount.total,
+            transactions: tCount,
+         });
+      };
+      fetchData();
+   }, []);
+
    const stats = [
       {
-         name: 'Tổng số lượng Sản phẩm',
-         value: '1,234',
-         change: '+12.5%',
+         statsId: 1,
+         name: 'Số lượng Sản phẩm',
+         value: counts.products,
          icon: Package,
-         trend: 'up',
       },
       {
-         name: 'Tổng số lượng Vật tư',
-         value: '5,678',
-         change: '+3.2%',
-         icon: Package,
-         trend: 'up',
+         statsId: 2,
+         name: 'Số lượng Vật tư',
+         value: counts.materials,
+         icon: Archive,
       },
       {
-         name: 'Tổng số lượng Kho',
-         value: '12.5M',
-         change: '-2.1%',
-         icon: DollarSign,
-         trend: 'down',
+         statsId: 3,
+         name: 'Vật phẩm trong Kho',
+         value: counts.inventory,
+         icon: Warehouse,
       },
       {
-         name: 'Tăng trưởng',
-         value: '24.3%',
-         change: '+8.7%',
-         icon: TrendingUp,
-         trend: 'up',
+         statsId: 4,
+         name: 'Nhập xuất hôm nay',
+         value: counts.transactions,
+         icon: RefreshCw,
       },
    ];
 
-   const recentActivities = [
-      {
-         id: 1,
-         type: 'Nhập hàng',
-         product: 'Quai dép đỏ size 37',
-         quantity: 50,
-         time: '10 phút trước',
-      },
-      { id: 2, type: 'Xuất hàng', product: 'Keo dán', quantity: 2, time: '1 giờ trước' },
-      { id: 3, type: 'Nhập hàng', product: 'Giấy bọc', quantity: 100, time: '3 giờ trước' },
-      {
-         id: 4,
-         type: 'Điều chỉnh',
-         product: 'Quai dép xanh size 38',
-         quantity: -5,
-         time: '5 giờ trước',
-      },
-   ];
+   const [warningMaterials, setWarningMaterials] = useState([]);
+   const [warningInventory, setWarningInventory] = useState([]);
+   const [loading, setLoading] = useState(true);
+
+   useEffect(() => {
+      const fetchLowStock = async () => {
+         try {
+            setLoading(true);
+            const dataWarningMaterials = await window.api.getItemLowStock(2);
+            const warningInventory = await window.api.getItemLowStock(3);
+
+            setWarningMaterials(dataWarningMaterials);
+            setWarningInventory(warningInventory);
+         } catch (error) {
+            console.error('Lỗi lấy dữ liệu cảnh báo:', error);
+         } finally {
+            setLoading(false);
+         }
+      };
+
+      fetchLowStock();
+   }, []);
+
+   if (loading) return <div>Đang tải dữ liệu...</div>;
 
    return (
       <div>
@@ -67,103 +96,148 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between">
                      <div>
                         <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                        <p className="mt-2 text-3xl font-semibold text-gray-900">{stat.value}</p>
+
+                        {stat.statsId !== 4 ? (
+                           <p className="mt-2 text-2xl font-semibold text-gray-900">{stat.value}</p>
+                        ) : (
+                           <p
+                              className={`mt-2 text-2xl font-semibold text-gray-900 ${stat.value >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                           >
+                              {stat.value > 0 ? `+${stat.value}` : stat.value}
+                           </p>
+                        )}
                      </div>
-                     <div
-                        className={`p-3 rounded-lg ${stat.trend === 'up' ? 'bg-green-100' : 'bg-red-100'}`}
-                     >
-                        <stat.icon
-                           className={`h-6 w-6 ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}
-                        />
+                     <div className="p-3 rounded-lg bg-green-100">
+                        <stat.icon className="h-6 w-6 text-green-600" />
                      </div>
-                  </div>
-                  <div className="mt-4 flex items-center">
-                     {stat.trend === 'up' ? (
-                        <ArrowUpRight className="h-4 w-4 text-green-600 mr-1" />
-                     ) : (
-                        <ArrowDownRight className="h-4 w-4 text-red-600 mr-1" />
-                     )}
-                     <span
-                        className={`text-sm ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}
-                     >
-                        {stat.change}
-                     </span>
-                     <span className="ml-2 text-sm text-gray-500">so với tháng trước</span>
                   </div>
                </div>
             ))}
          </div>
 
-         {/* Recent Activities & Low Stock */}
+         {/* Low Material & Low Stock */}
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Recent Activities */}
+            {/* Low Material */}
             <div className="bg-white rounded-lg shadow">
                <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-lg font-medium text-gray-900">Hoạt động gần đây</h2>
+                  <h2 className="text-lg font-medium text-gray-900">Cảnh báo Vật tư thấp</h2>
                </div>
                <div className="divide-y divide-gray-200">
-                  {recentActivities.map((activity) => (
-                     <div key={activity.id} className="px-6 py-4">
-                        <div className="flex items-center justify-between">
-                           <div>
-                              <p className="font-medium text-gray-900">{activity.type}</p>
-                              <p className="text-sm text-gray-600">{activity.product}</p>
-                           </div>
-                           <div className="text-right">
-                              <p
-                                 className={`font-medium ${activity.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}
-                              >
-                                 {activity.quantity > 0
-                                    ? `+${activity.quantity}`
-                                    : activity.quantity}
-                              </p>
-                              <p className="text-sm text-gray-500">{activity.time}</p>
+                  {warningMaterials.length > 0 ? (
+                     warningMaterials.map((material) => (
+                        <div
+                           key={material.item_id}
+                           className="px-6 py-4 hover:bg-gray-50 transition-colors"
+                        >
+                           <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                 <p className="font-semibold text-gray-900">{material.item_name}</p>
+                                 <p className="text-xs font-medium text-gray-400 uppercase tracking-tight mt-0.5">
+                                    {material.item_code}
+                                 </p>
+                              </div>
+
+                              <div className="flex-1 text-center">
+                                 <p className="text-sm font-medium text-gray-600">
+                                    Còn{' '}
+                                    <span className="text-gray-900 font-bold">
+                                       {material.quantity}
+                                    </span>{' '}
+                                    {material.unit_name}
+                                 </p>
+                              </div>
+
+                              <div className="flex-1 text-right">
+                                 <span
+                                    className={`px-3 py-1 text-xs font-bold rounded-full ${
+                                       material.quantity === 0
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-orange-100 text-orange-700'
+                                    }`}
+                                 >
+                                    {material.quantity === 0 ? 'Hết hàng' : 'Sắp hết'}
+                                 </span>
+                              </div>
                            </div>
                         </div>
+                     ))
+                  ) : (
+                     <div className="flex flex-col items-center justify-center py-12 px-4">
+                        <div className="bg-green-50 p-3 rounded-full mb-3">
+                           <CheckCircle className="w-8 h-8 text-green-500" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                           Không có cảnh báo nào
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                           Không có sản phẩm nào đạt ngưỡng cảnh báo
+                        </p>
                      </div>
-                  ))}
+                  )}
                </div>
             </div>
 
             {/* Low Stock Alert */}
             <div className="bg-white rounded-lg shadow">
                <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-lg font-medium text-gray-900">Cảnh báo tồn kho thấp</h2>
+                  <h2 className="text-lg font-medium text-gray-900">
+                     Cảnh báo Vật phẩm trong Kho thấp
+                  </h2>
                </div>
                <div className="divide-y divide-gray-200">
-                  <div className="px-6 py-4">
-                     <div className="flex items-center justify-between">
-                        <div>
-                           <p className="font-medium text-gray-900">Keo dán</p>
-                           <p className="text-sm text-gray-600">Còn 2 thùng</p>
+                  {warningInventory.length > 0 ? (
+                     warningInventory.map((inventory) => (
+                        <div
+                           key={inventory.item_id}
+                           className="px-6 py-4 hover:bg-gray-50 transition-colors"
+                        >
+                           <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                 <p className="font-semibold text-gray-900">
+                                    {inventory.item_name}
+                                 </p>
+                                 <p className="text-xs font-medium text-gray-400 uppercase tracking-tight mt-0.5">
+                                    {inventory.item_code}
+                                 </p>
+                              </div>
+
+                              <div className="flex-1 text-center">
+                                 <p className="text-sm font-medium text-gray-600">
+                                    Còn{' '}
+                                    <span className="text-gray-900 font-bold">
+                                       {inventory.quantity}
+                                    </span>{' '}
+                                    {inventory.unit_name}
+                                 </p>
+                              </div>
+
+                              <div className="flex-1 text-right">
+                                 <span
+                                    className={`px-3 py-1 text-xs font-bold rounded-full ${
+                                       inventory.quantity === 0
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-orange-100 text-orange-700'
+                                    }`}
+                                 >
+                                    {inventory.quantity === 0 ? 'Hết hàng' : 'Sắp hết'}
+                                 </span>
+                              </div>
+                           </div>
                         </div>
-                        <span className="px-3 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                           Sắp hết
-                        </span>
-                     </div>
-                  </div>
-                  <div className="px-6 py-4">
-                     <div className="flex items-center justify-between">
-                        <div>
-                           <p className="font-medium text-gray-900">Giấy bọc</p>
-                           <p className="text-sm text-gray-600">Còn 3 bao</p>
+                     ))
+                  ) : (
+                     <div className="flex flex-col items-center justify-center py-12 px-4">
+                        <div className="bg-green-50 p-3 rounded-full mb-3">
+                           <CheckCircle className="w-8 h-8 text-green-500" />
                         </div>
-                        <span className="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                           Cảnh báo
-                        </span>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                           Không có cảnh báo nào
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                           Không có sản phẩm nào đạt ngưỡng cảnh báo
+                        </p>
                      </div>
-                  </div>
-                  <div className="px-6 py-4">
-                     <div className="flex items-center justify-between">
-                        <div>
-                           <p className="font-medium text-gray-900">Quai dép đỏ size 37</p>
-                           <p className="text-sm text-gray-600">Còn 15 đôi</p>
-                        </div>
-                        <span className="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                           Cảnh báo
-                        </span>
-                     </div>
-                  </div>
+                  )}
                </div>
             </div>
          </div>

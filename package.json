@@ -19,7 +19,8 @@
    },
    "build": {
       "appId": "com.warehouse.app",
-      "productName": "Warehouse Management",
+      "afterPack": "./removeLocales.cjs",
+      "productName": "TechWarehouse",
       "directories": {
          "output": "release/${version}"
       },
@@ -40,7 +41,10 @@
       "nsis": {
          "oneClick": false,
          "allowToChangeInstallationDirectory": true,
-         "shortcutName": "Warehouse Management"
+         "createDesktopShortcut": true,
+         "shortcutName": "TechWarehouse",
+         "uninstallDisplayName": "TechWarehouse",
+         "deleteAppDataOnUninstall": true
       }
    },
    "dependencies": {

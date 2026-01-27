@@ -21,7 +21,7 @@ export function initDb() {
 
    db = new Database(dbPath, {
       fileMustExist: true, // Không cho phép tự tạo file rỗng
-      verbose: console.log, // Debug Query SQL
+      // verbose: console.log, // Debug Query SQL
    });
    db.pragma('foreign_keys = ON');
 

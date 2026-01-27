@@ -421,7 +421,7 @@ const Materials = () => {
          )}
 
          {/* Pagination */}
-         {filteredMaterials.length > 0 && (
+         {filteredMaterials.length >= limit && (
             <div className="flex justify-end gap-2 mt-6">
                <Button
                   variant="secondary"

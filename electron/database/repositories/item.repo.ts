@@ -25,9 +25,14 @@ export const ItemRepository = {
       }
    },
 
-   countAll(type_item: number) {
+   countItem(type_item: number) {
       try {
          const db = getDb();
+         // Get All Type
+         if (type_item === 0) {
+            return db.prepare(`SELECT COUNT(*) as total FROM items`).get() as { total: number };
+         }
+
          return db
             .prepare(`SELECT COUNT(*) as total FROM items WHERE type_id = ?`)
             .get(type_item) as { total: number };
@@ -70,7 +75,7 @@ export const ItemRepository = {
       }
    },
 
-   getById(id: number) {
+   getById(item_id: number) {
       try {
          const db = getDb();
          return db
@@ -79,9 +84,32 @@ export const ItemRepository = {
                SELECT * FROM items WHERE item_id = ?
             `
             )
-            .get(id);
+            .get(item_id);
       } catch (error) {
          console.error('Get Item By ID Error:', error);
+         throw error;
+      }
+   },
+
+   getItemLowStock(type_item: number) {
+      try {
+         const db = getDb();
+         const query = `
+            SELECT
+               i.item_id,
+               i.item_name,
+               i.item_code,
+               i.total_quantity as quantity,
+               u.unit_name
+            FROM items i
+            JOIN units u ON i.unit_id = u.unit_id
+            WHERE i.is_low_stock = 1 AND i.type_id = ?
+            ORDER BY i.total_quantity ASC
+         `;
+
+         return db.prepare(query).all(type_item);
+      } catch (error) {
+         console.error('Get Low Stock Items Error:', error);
          throw error;
       }
    },

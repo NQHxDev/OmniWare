@@ -122,12 +122,16 @@ app.whenReady().then(async () => {
       ipcMain.handle('items:get-paged', (_, page, type_item, limit) => {
          return {
             items: ItemRepository.getPaged({ page, type_item, limit }),
-            total: ItemRepository.countAll(type_item),
+            total: ItemRepository.countItem(type_item),
          };
       });
       ipcMain.handle('items:delete', (_, item_id) => ItemRepository.delete(item_id));
       ipcMain.handle('items:stock-inventory', (_, item_id, quantity, operation) =>
          ItemRepository.stockInventoryItem(item_id, quantity, operation)
+      );
+      ipcMain.handle('item:get-count', (_, type_item) => ItemRepository.countItem(type_item));
+      ipcMain.handle('item:get-low-stock', (_, type_item) =>
+         ItemRepository.getItemLowStock(type_item)
       );
 
       // Variant
@@ -174,6 +178,7 @@ app.whenReady().then(async () => {
       ipcMain.handle('transaction:create', (_, params: CreateTransactionParams) =>
          TransactionRepository.createTransaction(params)
       );
+      ipcMain.handle('transaction:today-net-flow', (_) => TransactionRepository.getTodayNetFlow());
    } catch (error) {
       console.error('Khởi tạo Database thất bại:', error);
    }

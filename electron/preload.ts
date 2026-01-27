@@ -70,6 +70,8 @@ contextBridge.exposeInMainWorld('api', {
    deleteItem: (item_id: number) => ipcRenderer.invoke('items:delete', item_id),
    stockInventoryItem: (item_id: number, quantity: number, operation: 'in' | 'out') =>
       ipcRenderer.invoke('items:stock-inventory', item_id, quantity, operation),
+   countItem: (type_item: number) => ipcRenderer.invoke('item:get-count', type_item),
+   getItemLowStock: (type_item: number) => ipcRenderer.invoke('item:get-low-stock', type_item),
 
    // Variant
    getVariantsByItem: (itemId: number) => ipcRenderer.invoke('variants:get-by-item', itemId),
@@ -86,4 +88,5 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('transaction:get-transactions', params),
    createTransaction: (params: CreateTransactionParams) =>
       ipcRenderer.invoke('transaction:create', params),
+   getTodayNetFlow: () => ipcRenderer.invoke('transaction:today-net-flow'),
 });

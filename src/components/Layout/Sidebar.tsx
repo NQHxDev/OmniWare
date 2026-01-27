@@ -47,8 +47,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                   className={`overflow-hidden transition-all duration-500 ease-in-out ${isCollapsed ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100 ml-3'}`}
                >
                   <span className="text-lg font-extrabold text-gray-900 whitespace-nowrap">
-                     Zeion
-                     <span className="font-semibold text-gray-500">Developer</span>
+                     Tech
+                     <span className="font-semibold text-gray-500">Warehouse</span>
                   </span>
                </div>
             </div>
@@ -91,6 +91,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                );
             })}
          </nav>
+
+         <div
+            className={`overflow-hidden transition-all duration-500 ease-in-out ${isCollapsed ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100 ml-3'}`}
+         >
+            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+               v1.0.0 @Nguyen Quang Hung
+            </span>
+         </div>
       </div>
    );
 };

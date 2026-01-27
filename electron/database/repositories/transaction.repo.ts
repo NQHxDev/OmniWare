@@ -210,4 +210,27 @@ export const TransactionRepository = {
 
       return trx();
    },
+
+   getTodayNetFlow() {
+      try {
+         const db = getDb();
+         const result = db
+            .prepare(
+               `
+                  SELECT
+                     SUM(CASE WHEN operation = 'in' THEN quantity ELSE 0 END) -
+                     SUM(CASE WHEN operation = 'out' THEN quantity ELSE 0 END) as net_flow
+                  FROM stock_history
+                  WHERE DATE(created_at) = DATE('now')
+               `
+            )
+            .get() as { net_flow: number | null };
+
+         // Nếu không có giao dịch nào, result.net_flow sẽ là null, ta trả về 0
+         return result?.net_flow ?? 0;
+      } catch (error) {
+         console.error('Lỗi tính toán luồng hàng hôm nay:', error);
+         throw error;
+      }
+   },
 };

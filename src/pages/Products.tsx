@@ -348,7 +348,7 @@ const Products = () => {
          </div>
 
          {/* pagination */}
-         {tableData.length > 0 && (
+         {tableData.length >= limit && (
             <div className="flex justify-end gap-2 mt-4">
                <Button
                   variant="secondary"
