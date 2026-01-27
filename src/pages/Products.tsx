@@ -2,8 +2,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Plus, Search, Filter } from 'lucide-react';
 import Button from '../components/Common/Button';
-import Select from '../components/Common/Select';
-import { useUnitStore } from '../stores/unit.store';
+import Select, { SelectOption } from '../components/Common/Select';
+import { IUnit, useUnitStore } from '../stores/unit.store';
 import { Item, useItemStore } from '../stores/item.store';
 import { Variant } from '../stores/variant.store';
 import { useVariantStore } from '../stores/variant.store';
@@ -11,11 +11,12 @@ import ItemDetailModal from '@/components/Products/ItemDetail';
 import ItemTable from '@/components/Products/ItemTable';
 import CreateVariantModal from '@/components/Products/CreateVariantModal';
 import CreateItemModal from '@/components/Products/CreateItemModal';
+import UpdateProductModal from '@/components/Products/UpdateProduct';
 
 const Products = () => {
    // Search and filter states
-   const [search, setSearch] = useState<string>('');
-   const [searchTerm, setSearchTerm] = useState('');
+   const [searchTerm, setSearchTerm] = useState<string>('');
+   const [searchVariant, setSearchVariant] = useState<string>('');
 
    // Modal states
    const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,11 +43,16 @@ const Products = () => {
    const [itemCode, setItemCode] = useState('');
    const [unitId, setUnitId] = useState<string | number | null>(null);
    const [typeId] = useState(1);
+   const [lowStockThreshold, setLowStockThreshold] = useState(-1);
 
    const [isAddVariantOpen, setIsAddVariantOpen] = useState(false);
    const [variantName, setVariantName] = useState('');
    const [variantCode, setVariantCode] = useState('');
    const [variantQuantity, setVariantQuantity] = useState(0);
+
+   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState<boolean>(false);
+   const [selectedProductForUpdate, setSelectedProductForUpdate] = useState<Item | null>(null);
 
    useEffect(() => {
       fetchUnits();
@@ -56,7 +62,24 @@ const Products = () => {
       fetchPage(1);
    }, [fetchPage]);
 
+   useEffect(() => {
+      if (isUpdateModalOpen) {
+         setTimeout(() => {
+            setIsUpdateModalVisible(true);
+         }, 10);
+      } else {
+         setIsUpdateModalVisible(false);
+      }
+   }, [isUpdateModalOpen]);
+
    const tableData = useMemo(() => {
+      if (searchTerm)
+         return items.filter(
+            (it) =>
+               it.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               it.item_code.toLowerCase().includes(searchTerm.toLowerCase())
+         );
+
       return items.map((item) => ({
          item_id: item.item_id,
          item_name: item.item_name,
@@ -64,22 +87,23 @@ const Products = () => {
          item_type: item.item_type,
          unit_name: item.unit_name,
          count_variant: item.count_variant || 0,
+         is_low_stock: item.is_low_stock || 0,
+         low_stock_threshold: item.low_stock_threshold || 0,
          total_quantity: item.total_quantity ?? 0,
       }));
-   }, [items]);
+   }, [items, searchTerm]);
 
-   const unitOptions = useMemo(() => {
+   const unitOptions: SelectOption[] = useMemo(() => {
       if (!units || units.length === 0) return [];
 
       return units
          .map((unit) => {
-            const id = unit?.unit_id || unit?.unit_id;
-            const name = unit?.unit_name || unit?.unit_slug || '';
-
-            return {
-               label: name,
-               value: id.toString(),
+            const oneUnit: SelectOption = {
+               value: unit?.unit_id.toString(),
+               label: unit?.unit_name || '',
             };
+
+            return oneUnit;
          })
          .filter(Boolean);
    }, [units]);
@@ -117,7 +141,8 @@ const Products = () => {
             itemName,
             itemCode,
             typeId, // = 1
-            Number(unitId)
+            Number(unitId),
+            lowStockThreshold
          );
 
          // reset form
@@ -132,13 +157,6 @@ const Products = () => {
          await fetchPage(page);
       } catch (err) {
          alert('Lỗi khi thêm sản phẩm: Vui lòng thử lại');
-
-         setTimeout(() => {
-            const firstInput = document.querySelector('input[name="itemName"]');
-            if (firstInput) {
-               (firstInput as HTMLInputElement).focus();
-            }
-         }, 100);
       }
    };
 
@@ -176,13 +194,46 @@ const Products = () => {
          await fetchPage(page);
       } catch (err) {
          alert('Lỗi khi thêm biến thể: Vui lòng thử lại');
+      }
+   };
 
-         setTimeout(() => {
-            const firstInput = document.querySelector('input[name="variantName"]');
-            if (firstInput) {
-               (firstInput as HTMLInputElement).focus();
-            }
-         }, 100);
+   const handleUpdateProduct = async (
+      e: React.FormEvent,
+      updatedData: {
+         item_name: string;
+         item_code: string;
+         unit_id: number;
+         low_stock_threshold: number;
+      }
+   ) => {
+      e.preventDefault();
+
+      if (!selectedProductForUpdate) return;
+
+      try {
+         await window.api.updateItem(
+            selectedProductForUpdate.item_id,
+            updatedData.item_name,
+            updatedData.item_code,
+            updatedData.unit_id,
+            updatedData.low_stock_threshold
+         );
+
+         await fetchPage(page);
+         setIsUpdateModalOpen(false);
+
+         // Cập nhật selectedProduct
+         if (selectedProduct?.item_id === selectedProductForUpdate.item_id) {
+            setSelectedProduct({
+               ...selectedProduct,
+               ...updatedData,
+               unit_name:
+                  unitOptions.find((u) => u.value === String(updatedData.unit_id))?.label ||
+                  selectedProduct.unit_name,
+            });
+         }
+      } catch (err) {
+         alert('Lỗi khi cập nhật sản phẩm: Vui lòng thử lại');
       }
    };
 
@@ -244,6 +295,8 @@ const Products = () => {
                      <input
                         type="search"
                         placeholder="Tìm kiếm sản phẩm..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="
                            w-full
                            pl-10 pr-4 py-2 border
@@ -253,8 +306,6 @@ const Products = () => {
                            focus:border-transparent
                            placeholder:text-gray-400
                         "
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
                      />
                   </div>
                </div>
@@ -276,13 +327,15 @@ const Products = () => {
                limit={limit}
                page={page}
                fetchPage={fetchPage}
-               onEdit={async (product) => {
+               onViewDetails={async (product) => {
                   setSelectedVariantIds([]);
                   setSelectedVariant(null);
                   setSelectedProduct(product);
                   setShowDetail(true);
                   await fetchByItem(product.item_id);
                }}
+               setIsUpdateModalOpen={setIsUpdateModalOpen}
+               setSelectedProductForUpdate={setSelectedProductForUpdate}
             />
          </div>
 
@@ -315,9 +368,9 @@ const Products = () => {
                isDrawerVisible={isDrawerVisible}
                selectedProduct={selectedProduct!}
                variants={variantsByItem[selectedProduct!.item_id] || []}
-               search={search}
                page={page}
-               setSearch={setSearch}
+               searchVariant={searchVariant}
+               setSearchVariant={setSearchVariant}
                selectedVariantIds={selectedVariantIds}
                toggleVariant={toggleVariant}
                toggleAllVariants={toggleAllVariants}
@@ -348,6 +401,7 @@ const Products = () => {
                setItemName={setItemName}
                setItemCode={setItemCode}
                setUnitId={setUnitId}
+               setLowStockThreshold={setLowStockThreshold}
                unitOptions={unitOptions}
             />
          )}
@@ -362,6 +416,20 @@ const Products = () => {
                setVariantQuantity={setVariantQuantity}
                handleAddVariant={handleAddVariant}
                setIsAddVariantOpen={setIsAddVariantOpen}
+            />
+         )}
+
+         {/* Update Product Modal */}
+         {(isUpdateModalOpen || isUpdateModalVisible) && selectedProductForUpdate && (
+            <UpdateProductModal
+               isModalVisible={isUpdateModalVisible}
+               selectedProduct={selectedProductForUpdate}
+               unitId={unitId}
+               unitOptions={unitOptions}
+               setIsModalOpen={setIsUpdateModalOpen}
+               handleUpdate={handleUpdateProduct}
+               setUnitId={setUnitId}
+               fetchUnits={fetchUnits}
             />
          )}
       </div>

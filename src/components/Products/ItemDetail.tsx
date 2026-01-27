@@ -3,7 +3,7 @@ import Button from '@/components/Common/Button';
 import AdvancedStockOperationModal from '@/components/Products/StockOperationModal';
 import { Item } from '@/stores/item.store';
 import { useVariantStore, Variant } from '@/stores/variant.store';
-import { Minus, Plus, Search, Trash2 } from 'lucide-react';
+import { Minus, PackageOpen, Plus, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type ItemDetailProps = {
@@ -12,8 +12,8 @@ type ItemDetailProps = {
    variants: Variant[];
    page: number;
 
-   search: string;
-   setSearch: (v: string) => void;
+   searchVariant: string;
+   setSearchVariant: (v: string) => void;
 
    selectedVariantIds: number[];
    toggleVariant: (id: number) => void;
@@ -34,8 +34,8 @@ export default function ItemDetailModal({
    variants,
    page,
 
-   search,
-   setSearch,
+   searchVariant,
+   setSearchVariant,
 
    selectedVariantIds,
    toggleVariant,
@@ -156,14 +156,14 @@ export default function ItemDetailModal({
    };
 
    const filteredVariants = useMemo(() => {
-      if (!search) return variants;
+      if (!searchVariant) return variants;
 
       return variants.filter(
          (v) =>
-            v.variant_name.toLowerCase().includes(search.toLowerCase()) ||
-            v.variant_code.toLowerCase().includes(search.toLowerCase())
+            v.variant_name.toLowerCase().includes(searchVariant.toLowerCase()) ||
+            v.variant_code.toLowerCase().includes(searchVariant.toLowerCase())
       );
-   }, [variants, search]);
+   }, [variants, searchVariant]);
 
    const getSelectedCountForModal = () => {
       if (isBulkOperation) {
@@ -217,8 +217,8 @@ export default function ItemDetailModal({
                         </div>
                         <input
                            type="search"
-                           value={search}
-                           onChange={(e) => setSearch(e.target.value)}
+                           value={searchVariant}
+                           onChange={(e) => setSearchVariant(e.target.value)}
                            placeholder="Tìm biến thể..."
                            className="
                               w-full h-10 pl-9 pr-3 py-2 border
@@ -264,92 +264,111 @@ export default function ItemDetailModal({
                   </div>
 
                   {/* Variant Table */}
-                  <table className="w-full border border-gray-200 rounded-lg overflow-hidden border-separate border-spacing-0">
-                     <thead className="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider">
-                        <tr>
-                           <th className="px-4 py-3 text-center w-12">
-                              <input
-                                 type="checkbox"
-                                 checked={
-                                    filteredVariants.length > 0 &&
-                                    selectedVariantIds.length === filteredVariants.length
-                                 }
-                                 onChange={toggleAllVariants}
-                              />
-                           </th>
-                           <th className="px-4 py-3 text-left text-gray-500 font-semibold">
-                              Biến thể
-                           </th>
-                           <th className="px-4 py-3 text-left text-gray-500 font-semibold">
-                              Mã SKU
-                           </th>
-                           <th className="px-4 py-3 text-center text-gray-500 font-semibold">
-                              Số lượng
-                           </th>
-                           <th className="px-4 py-3 text-center text-gray-500 font-semibold">
-                              Thao tác
-                           </th>
-                        </tr>
-                     </thead>
-                     <tbody className="divide-y divide-gray-200 bg-white">
-                        {filteredVariants.map((v: Variant) => (
-                           <tr
-                              key={v.variant_id}
-                              className="hover:bg-gray-50 transition-colors text-sm"
-                           >
-                              <td className="px-4 py-3 text-center">
+                  {filteredVariants.length > 0 ? (
+                     <table className="w-full border border-gray-200 rounded-lg overflow-hidden border-separate border-spacing-0">
+                        <thead className="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider">
+                           <tr>
+                              <th className="px-4 py-3 text-center w-12">
                                  <input
                                     type="checkbox"
-                                    checked={selectedVariantIds.includes(v.variant_id)}
-                                    onChange={() => toggleVariant(v.variant_id)}
+                                    checked={
+                                       filteredVariants.length > 0 &&
+                                       selectedVariantIds.length === filteredVariants.length
+                                    }
+                                    onChange={toggleAllVariants}
                                  />
-                              </td>
-
-                              <td className="px-4 py-3 text-gray-900 font-medium">
-                                 {v.variant_name}
-                              </td>
-
-                              <td className="px-4 py-3 text-gray-500 text-xs">{v.variant_code}</td>
-
-                              <td className="px-4 py-3 font-bold text-center">{v.quantity}</td>
-
-                              <td className="px-4 py-3">
-                                 <div className="flex items-center justify-center gap-4">
-                                    <div className="flex items-center justify-center gap-3">
-                                       {/* Nút Nhập đơn lẻ */}
-                                       <button
-                                          title="Nhập kho"
-                                          onClick={() => handleSingleStockInClick(v.variant_id)}
-                                          className="
-                              p-2 text-emerald-600
-                              hover:bg-emerald-50
-                              rounded-full
-                              transition-colors
-                              border border-transparent
-                              hover:border-emerald-200
-                            "
-                                       >
-                                          <Plus className="h-4 w-4" />
-                                       </button>
-
-                                       {/* Nút Xuất đơn lẻ */}
-                                       <button
-                                          title="Xuất kho"
-                                          onClick={() => handleSingleStockOutClick(v.variant_id)}
-                                          className="p-2 text-red-600 hover:bg-red-50
-                              rounded-full transition-colors
-                              border border-transparent hover:border-red-200
-                            "
-                                       >
-                                          <Minus className="h-4 w-4" />
-                                       </button>
-                                    </div>
-                                 </div>
-                              </td>
+                              </th>
+                              <th className="px-4 py-3 text-left text-gray-500 font-semibold">
+                                 Biến thể
+                              </th>
+                              <th className="px-4 py-3 text-left text-gray-500 font-semibold">
+                                 Mã SKU
+                              </th>
+                              <th className="px-4 py-3 text-center text-gray-500 font-semibold">
+                                 Số lượng
+                              </th>
+                              <th className="px-4 py-3 text-center text-gray-500 font-semibold">
+                                 Thao tác
+                              </th>
                            </tr>
-                        ))}
-                     </tbody>
-                  </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 bg-white">
+                           {filteredVariants.map((v: Variant) => (
+                              <tr
+                                 key={v.variant_id}
+                                 className="hover:bg-gray-50 transition-colors text-sm"
+                              >
+                                 <td className="px-4 py-3 text-center">
+                                    <input
+                                       type="checkbox"
+                                       checked={selectedVariantIds.includes(v.variant_id)}
+                                       onChange={() => toggleVariant(v.variant_id)}
+                                    />
+                                 </td>
+
+                                 <td className="px-4 py-3 text-gray-900 font-medium">
+                                    {v.variant_name}
+                                 </td>
+
+                                 <td className="px-4 py-3 text-gray-500 text-xs">
+                                    {v.variant_code}
+                                 </td>
+
+                                 <td className="px-4 py-3 font-bold text-center">{v.quantity}</td>
+
+                                 <td className="px-4 py-3">
+                                    <div className="flex items-center justify-center gap-4">
+                                       <div className="flex items-center justify-center gap-3">
+                                          {/* Nút Nhập đơn lẻ */}
+                                          <button
+                                             title="Nhập kho"
+                                             onClick={() => handleSingleStockInClick(v.variant_id)}
+                                             className="
+                                                p-2 text-emerald-600
+                                                hover:bg-emerald-50
+                                                rounded-full
+                                                transition-colors
+                                                border border-transparent
+                                                hover:border-emerald-200
+                                             "
+                                          >
+                                             <Plus className="h-4 w-4" />
+                                          </button>
+
+                                          {/* Nút Xuất đơn lẻ */}
+                                          <button
+                                             title="Xuất kho"
+                                             onClick={() => handleSingleStockOutClick(v.variant_id)}
+                                             className="p-2 text-red-600 hover:bg-red-50
+                                                rounded-full transition-colors
+                                                border border-transparent hover:border-red-200
+                                             "
+                                          >
+                                             <Minus className="h-4 w-4" />
+                                          </button>
+                                       </div>
+                                    </div>
+                                 </td>
+                              </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  ) : (
+                     <div className="flex flex-col items-center justify-center text-gray-400">
+                        {/* Icon minh họa - Sử dụng Package hoặc Inbox từ lucide-react */}
+                        <div className="bg-gray-50 p-4 rounded-full mb-3">
+                           <PackageOpen className="h-10 w-10 text-gray-300" />
+                        </div>
+
+                        <span className="text-lg font-medium text-gray-500">
+                           Không tìm thấy biến thể nào
+                        </span>
+
+                        <p className="text-sm text-gray-400 mt-1">
+                           Vui lòng kiểm tra lại bộ lọc hoặc thêm mới biến thể
+                        </p>
+                     </div>
+                  )}
                </div>
             </div>
          </div>

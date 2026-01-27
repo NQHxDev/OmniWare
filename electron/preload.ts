@@ -31,8 +31,36 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('units:update', unit_id, slug, name),
 
    // Items
-   createItem: (item_name: string, item_code: string, type_id: number, unit_id: number) =>
-      ipcRenderer.invoke('items:create', item_name, item_code, type_id, unit_id),
+   createItem: (
+      item_name: string,
+      item_code: string,
+      type_id: number,
+      unit_id: number,
+      low_stock_threshold: number
+   ) =>
+      ipcRenderer.invoke(
+         'items:create',
+         item_name,
+         item_code,
+         type_id,
+         unit_id,
+         low_stock_threshold
+      ),
+   updateItem: (
+      item_id: number,
+      item_name: string,
+      item_code: string,
+      unit_id: number,
+      low_stock_threshold: number
+   ) =>
+      ipcRenderer.invoke(
+         'items:update',
+         item_id,
+         item_name,
+         item_code,
+         unit_id,
+         low_stock_threshold
+      ),
    getItemsPaged: (page: number, limit: number) =>
       ipcRenderer.invoke('items:get-paged', page, limit),
    deleteItem: (item_id: number) => ipcRenderer.invoke('items:delete', item_id),

@@ -1,11 +1,5 @@
 import Button from '@/components/Common/Button';
-import Select from '@/components/Common/Select';
-import { useEffect } from 'react';
-
-type UnitOption = {
-   label: string;
-   value: string;
-};
+import Select, { SelectOption } from '@/components/Common/Select';
 
 type CreateItemProps = {
    isModalVisible: boolean;
@@ -18,7 +12,8 @@ type CreateItemProps = {
    setItemName: (itemName: string) => void;
    setItemCode: (itemCode: string) => void;
    setUnitId: (unitId: string | number | null) => void;
-   unitOptions: UnitOption[];
+   setLowStockThreshold: (lowStock: number) => void;
+   unitOptions: SelectOption[];
 };
 
 export default function CreateItemModal({
@@ -29,20 +24,9 @@ export default function CreateItemModal({
    setItemName,
    setItemCode,
    setUnitId,
+   setLowStockThreshold,
    unitOptions,
 }: CreateItemProps) {
-   useEffect(() => {
-      if (isModalVisible) {
-         // Focus vào input đầu tiên khi modal mở
-         setTimeout(() => {
-            const firstInput = document.querySelector('input[name="itemName"]');
-            if (firstInput) {
-               (firstInput as HTMLInputElement).focus();
-            }
-         }, 100);
-      }
-   }, [isModalVisible]);
-
    return (
       <div className="fixed inset-0 z-60 overflow-y-auto">
          {/* Backdrop */}
@@ -107,15 +91,15 @@ export default function CreateItemModal({
                               onChange={(e) => setItemCode(e.target.value)}
                               placeholder="Ví dụ: ABC001"
                               className="
-                                       w-full px-3 py-2
-                                       border border-gray-300 rounded-lg
-                                       text-sm text-gray-900
-                                       placeholder:text-gray-400
-                                       focus:outline-none
-                                       focus:ring-2 focus:ring-gray-900
-                                       focus:border-transparent
-                                       autofill:bg-white
-                                    "
+                                 w-full px-3 py-2
+                                 border border-gray-300 rounded-lg
+                                 text-sm text-gray-900
+                                 placeholder:text-gray-400
+                                 focus:outline-none
+                                 focus:ring-2 focus:ring-gray-900
+                                 focus:border-transparent
+                                 autofill:bg-white
+                              "
                            />
                         </div>
                         <div>
@@ -125,6 +109,26 @@ export default function CreateItemModal({
                               value={unitId}
                               onChange={setUnitId}
                               options={unitOptions}
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Ngưỡng cảnh báo
+                           </label>
+                           <input
+                              type="text"
+                              onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+                              placeholder="Không cảnh báo"
+                              className="
+                                 w-full px-3 py-2
+                                 border border-gray-300 rounded-lg
+                                 text-sm text-gray-900
+                                 placeholder:text-gray-400
+                                 focus:outline-none
+                                 focus:ring-2 focus:ring-gray-900
+                                 focus:border-transparent
+                                 autofill:bg-white
+                              "
                            />
                         </div>
                      </div>

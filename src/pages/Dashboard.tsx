@@ -3,21 +3,21 @@ import { Package, ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp } from 'l
 const Dashboard = () => {
    const stats = [
       {
-         name: 'Tổng sản phẩm',
+         name: 'Tổng số lượng Sản phẩm',
          value: '1,234',
          change: '+12.5%',
          icon: Package,
          trend: 'up',
       },
       {
-         name: 'Hàng tồn kho',
+         name: 'Tổng số lượng Vật tư',
          value: '5,678',
          change: '+3.2%',
          icon: Package,
          trend: 'up',
       },
       {
-         name: 'Doanh thu tháng',
+         name: 'Tổng số lượng Kho',
          value: '12.5M',
          change: '-2.1%',
          icon: DollarSign,

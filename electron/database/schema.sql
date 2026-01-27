@@ -29,6 +29,8 @@ CREATE TABLE items (
    type_id INTEGER NOT NULL,
    unit_id INTEGER NOT NULL,
    total_quantity INTEGER NOT NULL DEFAULT 0,
+   low_stock_threshold INTEGER NOT NULL DEFAULT -1,
+   is_low_stock INTEGER GENERATED ALWAYS AS (CASE WHEN low_stock_threshold >= 0 AND total_quantity <= low_stock_threshold THEN 1 ELSE 0 END) VIRTUAL,
    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
@@ -67,6 +69,11 @@ CREATE INDEX idx_items_item_name ON items (item_name); -- WHERE item_name LIKE '
 CREATE INDEX idx_items_type_name ON items (type_id, item_name);
 -- WHERE type_id = ?
 -- WHERE type_id = ? AND item_name LIKE ?
+
+CREATE INDEX idx_items_stock_alert ON items (low_stock_threshold, total_quantity);
+-- WHERE low_stock_threshold >= 0 AND total_quantity <= low_stock_threshold
+
+CREATE INDEX idx_items_low_stock_status ON items (is_low_stock);
 
 CREATE INDEX idx_variants_item_id ON item_variants (item_id); -- WHERE item_id = ?
 

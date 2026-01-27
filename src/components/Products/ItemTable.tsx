@@ -1,10 +1,9 @@
 import Table from '@/components/Common/Table';
 import Button from '@/components/Common/Button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Eye, Trash2 } from 'lucide-react';
 import { Item } from '@/stores/item.store';
 import { useState } from 'react';
 import DeleteItemModal from '@/components/Products/DeleteItemModal';
-// import { useToast } from '@/components/Common/Toast';
 
 type ItemTableProps = {
    data: Item[];
@@ -12,10 +11,21 @@ type ItemTableProps = {
    limit: number;
    page: number;
    fetchPage: (page: number) => Promise<void>;
-   onEdit: (product: Item) => void;
+   onViewDetails: (product: Item) => void;
+   setIsUpdateModalOpen: (value: boolean) => void;
+   setSelectedProductForUpdate: (product: Item) => void;
 };
 
-const ItemTable = ({ data, isLoading, limit, page, fetchPage, onEdit }: ItemTableProps) => {
+const ItemTable = ({
+   data,
+   isLoading,
+   limit,
+   page,
+   fetchPage,
+   onViewDetails,
+   setIsUpdateModalOpen,
+   setSelectedProductForUpdate,
+}: ItemTableProps) => {
    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
    const [productToDelete, setProductToDelete] = useState<Item | null>(null);
    const [isDeleting, setIsDeleting] = useState(false);
@@ -113,19 +123,35 @@ const ItemTable = ({ data, isLoading, limit, page, fetchPage, onEdit }: ItemTabl
 
                      <td className="px-6 py-4 text-center">{product.count_variant}</td>
 
-                     <td className="px-6 py-4 text-center font-bold">
+                     <td
+                        className={`px-6 py-4 text-center font-bold ${product.is_low_stock === 1 ? 'text-red-600' : 'text-gray-900'}`}
+                     >
                         {product.total_quantity.toLocaleString()}
                      </td>
 
                      <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-1">
+                           {/* Nút xem chi tiết */}
                            <Button
                               variant="ghost"
-                              onClick={() => onEdit(product)}
+                              onClick={() => onViewDetails(product)}
+                              aria-label={`Xem chi tiết ${product.item_name}`}
+                           >
+                              <Eye className="h-4 w-4 text-blue-500" />
+                           </Button>
+                           {/* Nút chỉnh sửa thông tin */}
+                           <Button
+                              variant="ghost"
+                              onClick={() => {
+                                 setSelectedProductForUpdate(product);
+                                 setIsUpdateModalOpen(true);
+                              }}
                               aria-label={`Chỉnh sửa ${product.item_name}`}
                            >
                               <Edit className="h-4 w-4" />
                            </Button>
+
+                           {/* Nút xoá Product */}
                            <Button
                               variant="ghost"
                               onClick={() => handleDeleteClick(product)}

@@ -49,7 +49,9 @@ export const ItemRepository = {
                   i.item_code,
                   it.type_code AS item_type,
                   u.unit_name,
-                  i.total_quantity
+                  i.total_quantity,
+                  i.is_low_stock,
+                  i.low_stock_threshold
                FROM items i
                JOIN item_types it ON it.type_id = i.type_id
                JOIN units u ON u.unit_id = i.unit_id
@@ -80,19 +82,54 @@ export const ItemRepository = {
       }
    },
 
-   create(data: { item_name: string; item_code: string; type_id: number; unit_id: number }) {
+   create(data: {
+      item_name: string;
+      item_code: string;
+      type_id: number;
+      unit_id: number;
+      low_stock_threshold: number;
+   }) {
       try {
          const db = getDb();
          return db
             .prepare(
                `
-               INSERT INTO items (item_name, item_code, type_id, unit_id)
-               VALUES (@item_name, @item_code, @type_id, @unit_id)
-            `
+                  INSERT INTO items (item_name, item_code, type_id, unit_id, low_stock_threshold)
+                  VALUES (@item_name, @item_code, @type_id, @unit_id, @low_stock_threshold)
+               `
             )
             .run(data);
       } catch (error) {
          console.error('Create New Item Error:', error);
+         throw error;
+      }
+   },
+
+   update(data: {
+      item_id: number;
+      item_name: string;
+      item_code: string;
+      unit_id: number;
+      low_stock_threshold: number;
+   }) {
+      try {
+         const db = getDb();
+         return db
+            .prepare(
+               `
+               UPDATE items
+               SET
+                  item_name = @item_name,
+                  item_code = @item_code,
+                  unit_id = @unit_id,
+                  low_stock_threshold = @low_stock_threshold,
+                  updated_at = CURRENT_TIMESTAMP
+               WHERE item_id = @item_id
+            `
+            )
+            .run(data);
+      } catch (error) {
+         console.error('Update Item Error:', error);
          throw error;
       }
    },
@@ -110,8 +147,19 @@ export const ItemRepository = {
          }
          return false;
       } catch (error) {
-         console.error('Delete Item:', error);
+         console.error('Delete Item Error:', error);
          throw error;
       }
    },
+
+   // existedItemCode(item_code: string) {
+   //    try {
+   //       const db = getDb();
+
+   //       return false;
+   //    } catch (error) {
+   //       console.error('Check ItemCode Error:', error);
+   //       throw error;
+   //    }
+   // },
 };

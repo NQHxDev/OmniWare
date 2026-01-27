@@ -8,6 +8,9 @@ export type Item = {
    item_type: number;
    unit_name: string;
    total_quantity: number;
+   is_low_stock: number;
+   low_stock_threshold: number;
+
    count_variant: number;
 };
 

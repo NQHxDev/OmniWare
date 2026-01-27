@@ -2,6 +2,6 @@
   "limit": 8,
   "theme": "light",
   "language": "vi",
-  "autoRefresh": true,
+  "autoRefresh": false,
   "refreshInterval": 30
 }

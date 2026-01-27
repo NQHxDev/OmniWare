@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { createRequire } from 'module';
 import { Database as DatabaseInstanceType } from 'better-sqlite3';
 
@@ -12,7 +13,16 @@ let dbPath: string;
 export function initDb() {
    dbPath = initDatabase();
 
-   db = new Database(dbPath);
+   if (!fs.existsSync(dbPath)) {
+      throw new Error(
+         `Systems: File Database không tồn tại tại ${dbPath}. Ứng dụng không thể khởi động`
+      );
+   }
+
+   db = new Database(dbPath, {
+      fileMustExist: true, // Không cho phép tự tạo file rỗng
+      verbose: console.log, // Debug Query SQL
+   });
    db.pragma('foreign_keys = ON');
 
    return { db, dbPath };

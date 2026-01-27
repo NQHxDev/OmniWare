@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 
-interface Unit {
+export interface IUnit {
    unit_id: number;
    unit_slug: string;
    unit_name: string;
 }
 
 interface UnitState {
-   units: Unit[];
+   units: IUnit[];
    isLoadingUnit: boolean;
    fetchUnits: () => Promise<void>;
    updateUnit: (id: number, slug: string, name: string) => Promise<void>;

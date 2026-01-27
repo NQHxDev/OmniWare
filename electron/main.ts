@@ -81,8 +81,15 @@ app.whenReady().then(() => {
       ipcMain.handle('units:update', (_, id, slug, name) => UnitRepository.update(id, slug, name));
 
       // Item
-      ipcMain.handle('items:create', (_, item_name, item_code, type_id, unit_id) =>
-         ItemRepository.create({ item_name, item_code, type_id, unit_id })
+      ipcMain.handle(
+         'items:create',
+         (_, item_name, item_code, type_id, unit_id, low_stock_threshold) =>
+            ItemRepository.create({ item_name, item_code, type_id, unit_id, low_stock_threshold })
+      );
+      ipcMain.handle(
+         'items:update',
+         (_, item_id, item_name, item_code, unit_id, low_stock_threshold) =>
+            ItemRepository.update({ item_id, item_name, item_code, unit_id, low_stock_threshold })
       );
       ipcMain.handle('items:get-paged', (_, page, limit) => {
          return {

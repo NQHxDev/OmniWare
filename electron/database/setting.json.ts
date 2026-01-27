@@ -18,7 +18,7 @@ export const initializeSettingsFile = async () => {
 
    try {
       await fs.access(settingsPath);
-      console.log('NQHxLog: Init File Setting Success');
+      console.log('Systems: Init File Setting Success');
    } catch (error) {
       // File không tồn tại, tạo mới
       await fs.mkdir(path.dirname(settingsPath), { recursive: true });

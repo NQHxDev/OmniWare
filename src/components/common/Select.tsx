@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-type SelectOption = {
+export type SelectOption = {
    label: string;
    value: string;
 };
@@ -32,10 +32,13 @@ const Select: React.FC<SelectProps> = ({
             setIsOpen(false);
          }
       };
+      if (options && options.length > 0 && !value) {
+         onChange?.(options[0].value);
+      }
 
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
-   }, []);
+   }, [options, value, onChange]);
 
    return (
       <div ref={containerRef} className="w-full">
