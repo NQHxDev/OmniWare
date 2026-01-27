@@ -6,7 +6,6 @@ import {
    FileText,
    Settings,
    ChevronLeft,
-   ChevronRight,
    Archive,
 } from 'lucide-react';
 
@@ -59,11 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                onClick={onToggle}
                className={`p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-500 ease-in-out ${isCollapsed ? 'absolute top-4 right-3' : 'ml-auto'}`}
             >
-               {isCollapsed ? (
-                  <ChevronRight className="h-4 w-4 text-gray-500" />
-               ) : (
-                  <ChevronLeft className="h-4 w-4 text-gray-500" />
-               )}
+               {!isCollapsed && <ChevronLeft className="h-4 w-4 text-gray-500" />}
             </button>
          </div>
 

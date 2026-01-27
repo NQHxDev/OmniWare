@@ -2,9 +2,10 @@ import Button from '@/components/Common/Button';
 import Select, { SelectOption } from '@/components/Common/Select';
 
 type CreateItemProps = {
+   title: string;
    isModalVisible: boolean;
-   variantCode: string;
-   variantQuantity: number;
+   variantCode?: string;
+   variantQuantity?: number;
    unitId: string | number | null;
 
    setIsModalOpen: (value: boolean) => void;
@@ -17,6 +18,7 @@ type CreateItemProps = {
 };
 
 export default function CreateItemModal({
+   title,
    isModalVisible,
    unitId,
    setIsModalOpen,
@@ -49,7 +51,7 @@ export default function CreateItemModal({
             >
                {/* Header */}
                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900">Thêm sản phẩm mới</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
                   <button
                      onClick={() => setIsModalOpen(false)}
                      className="text-gray-400 hover:text-gray-500 p-1"

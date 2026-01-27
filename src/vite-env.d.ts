@@ -25,8 +25,13 @@ interface Window {
          unit_id: number,
          low_stock_threshold: number
       ) => Promise<any>;
-      getItemsPaged: (page: number, limit: number) => Promise<any>;
+      getItemsPaged: (page: number, type_item, limit: number) => Promise<any>;
       deleteItem: (item_id: number) => Promise<any>;
+      stockInventoryItem: (
+         item_id: number,
+         quantity: number,
+         operation: 'in' | 'out'
+      ) => Promise<any>;
 
       // Variant
       getVariantsByItem: (itemId: number) => Promise<any>;

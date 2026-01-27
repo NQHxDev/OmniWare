@@ -25,17 +25,19 @@ export const ItemRepository = {
       }
    },
 
-   countAll() {
+   countAll(type_item: number) {
       try {
          const db = getDb();
-         return db.prepare(`SELECT COUNT(*) as total FROM items`).get() as { total: number };
+         return db
+            .prepare(`SELECT COUNT(*) as total FROM items WHERE type_id = ?`)
+            .get(type_item) as { total: number };
       } catch (error) {
          console.error('Get Count Item Error:', error);
          throw error;
       }
    },
 
-   getPaged({ page, limit }: { page: number; limit: number }) {
+   getPaged({ page, type_item, limit }: { page: number; type_item: number; limit: number }) {
       try {
          const db = getDb();
          const offset = (page - 1) * limit;
@@ -51,15 +53,17 @@ export const ItemRepository = {
                   u.unit_name,
                   i.total_quantity,
                   i.is_low_stock,
-                  i.low_stock_threshold
+                  i.low_stock_threshold,
+                  (SELECT COUNT(*) FROM item_variants iv WHERE iv.item_id = i.item_id) as count_variant
                FROM items i
                JOIN item_types it ON it.type_id = i.type_id
                JOIN units u ON u.unit_id = i.unit_id
+               WHERE (i.type_id = ? OR ? = 0) -- 0: get All
                ORDER BY i.item_id DESC
                LIMIT ? OFFSET ?
             `
             )
-            .all(limit, offset);
+            .all(type_item, type_item, limit, offset);
       } catch (error) {
          console.error('Get Item For Page Error:', error);
          throw error;
@@ -91,7 +95,8 @@ export const ItemRepository = {
    }) {
       try {
          const db = getDb();
-         return db
+
+         const result = db
             .prepare(
                `
                   INSERT INTO items (item_name, item_code, type_id, unit_id, low_stock_threshold)
@@ -99,6 +104,8 @@ export const ItemRepository = {
                `
             )
             .run(data);
+
+         return { item_id: result.lastInsertRowid };
       } catch (error) {
          console.error('Create New Item Error:', error);
          throw error;
@@ -148,6 +155,40 @@ export const ItemRepository = {
          return false;
       } catch (error) {
          console.error('Delete Item Error:', error);
+         throw error;
+      }
+   },
+
+   stockInventoryItem(itemId: number, quantity: number, operation: 'in' | 'out') {
+      try {
+         const db = getDb();
+         const change = operation === 'in' ? quantity : -quantity;
+
+         const updateTransaction = db.transaction(() => {
+            const item = db
+               .prepare('SELECT total_quantity FROM items WHERE item_id = ?')
+               .get(itemId) as { total_quantity: number };
+
+            if (!item) throw new Error('Sản phẩm không tồn tại');
+
+            const newQty = item.total_quantity + change;
+            if (newQty < 0) throw new Error('Số lượng tồn kho không đủ để xuất');
+
+            db.prepare(
+               `UPDATE items SET total_quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE item_id = ?`
+            ).run(newQty, itemId);
+
+            db.prepare(
+               `INSERT INTO stock_history (item_id, variant_id, operation, quantity, previous_quantity, new_quantity)
+                VALUES (?, ?, ?, ?, ?, ?)`
+            ).run(itemId, 0, operation, quantity, item.total_quantity, newQty);
+
+            return { success: true, currentStock: newQty };
+         });
+
+         return updateTransaction();
+      } catch (error) {
+         console.error('Stock Inventory Item Error:', error);
          throw error;
       }
    },

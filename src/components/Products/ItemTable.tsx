@@ -1,6 +1,6 @@
 import Table from '@/components/Common/Table';
 import Button from '@/components/Common/Button';
-import { Edit, Eye, Trash2 } from 'lucide-react';
+import { Edit, Eye, Package, Plus, Trash2 } from 'lucide-react';
 import { Item } from '@/stores/item.store';
 import { useState } from 'react';
 import DeleteItemModal from '@/components/Products/DeleteItemModal';
@@ -10,8 +10,9 @@ type ItemTableProps = {
    isLoading: boolean;
    limit: number;
    page: number;
-   fetchPage: (page: number) => Promise<void>;
+   fetchPage: (page: number, type_item: number) => Promise<void>;
    onViewDetails: (product: Item) => void;
+   setIsModalOpen: (value: boolean) => void;
    setIsUpdateModalOpen: (value: boolean) => void;
    setSelectedProductForUpdate: (product: Item) => void;
 };
@@ -23,6 +24,7 @@ const ItemTable = ({
    page,
    fetchPage,
    onViewDetails,
+   setIsModalOpen,
    setIsUpdateModalOpen,
    setSelectedProductForUpdate,
 }: ItemTableProps) => {
@@ -41,7 +43,7 @@ const ItemTable = ({
       setIsDeleting(true);
       try {
          await window.api.deleteItem(productToDelete.item_id);
-         await fetchPage(page);
+         await fetchPage(page, 1);
          handleCloseDeleteModal();
       } catch (err) {
          console.error('Lỗi khi xóa sản phẩm:', err);
@@ -82,13 +84,14 @@ const ItemTable = ({
 
    if (data.length === 0) {
       return (
-         <div
-            className="flex flex-col items-center justify-center text-gray-500 p-8"
-            style={{ minHeight }}
-            role="status"
-            aria-label="Không có dữ liệu"
-         >
-            <p>Không có sản phẩm nào</p>
+         <div className="bg-white rounded-lg shadow p-12 text-center">
+            <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Không có Sản phẩm nào</h3>
+            <p className="text-gray-500 mb-6">Bắt đầu bằng cách thêm một Sản phẩm mới</p>
+            <Button onClick={() => setIsModalOpen(true)} className="flex items-center mx-auto">
+               <Plus className="h-4 w-4 mr-2" />
+               Thêm Sản phẩm đầu tiên
+            </Button>
          </div>
       );
    }

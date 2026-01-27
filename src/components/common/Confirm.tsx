@@ -28,7 +28,7 @@ const Confirm = ({ isOpen, title, message, onConfirm, onCancel }: ConfirmProps) 
                   onClick={onConfirm}
                   className="w-full py-3 text-sm font-semibold text-white bg-black hover:bg-zinc-800 rounded-full transition-all active:scale-95"
                >
-                  ĐỒNG Ý
+                  Đồng ý Ý
                </button>
 
                {/* Nút phụ */}

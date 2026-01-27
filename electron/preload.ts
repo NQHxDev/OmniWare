@@ -61,9 +61,11 @@ contextBridge.exposeInMainWorld('api', {
          unit_id,
          low_stock_threshold
       ),
-   getItemsPaged: (page: number, limit: number) =>
-      ipcRenderer.invoke('items:get-paged', page, limit),
+   getItemsPaged: (page: number, type_item: number, limit: number) =>
+      ipcRenderer.invoke('items:get-paged', page, type_item, limit),
    deleteItem: (item_id: number) => ipcRenderer.invoke('items:delete', item_id),
+   stockInventoryItem: (item_id: number, quantity: number, operation: 'in' | 'out') =>
+      ipcRenderer.invoke('items:stock-inventory', item_id, quantity, operation),
 
    // Variant
    getVariantsByItem: (itemId: number) => ipcRenderer.invoke('variants:get-by-item', itemId),

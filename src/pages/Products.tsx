@@ -2,8 +2,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Plus, Search, Filter } from 'lucide-react';
 import Button from '../components/Common/Button';
-import Select, { SelectOption } from '../components/Common/Select';
-import { IUnit, useUnitStore } from '../stores/unit.store';
+import { SelectOption } from '../components/Common/Select';
+import { useUnitStore } from '../stores/unit.store';
 import { Item, useItemStore } from '../stores/item.store';
 import { Variant } from '../stores/variant.store';
 import { useVariantStore } from '../stores/variant.store';
@@ -59,7 +59,7 @@ const Products = () => {
    }, [fetchUnits]);
 
    useEffect(() => {
-      fetchPage(1);
+      fetchPage(1, 1);
    }, [fetchPage]);
 
    useEffect(() => {
@@ -139,8 +139,8 @@ const Products = () => {
       try {
          await window.api.createItem(
             itemName,
-            itemCode,
-            typeId, // = 1
+            'IT_' + itemCode,
+            typeId,
             Number(unitId),
             lowStockThreshold
          );
@@ -154,7 +154,7 @@ const Products = () => {
          setIsModalOpen(false);
 
          // reload danh sách
-         await fetchPage(page);
+         await fetchPage(page, 1);
       } catch (err) {
          alert('Lỗi khi thêm sản phẩm: Vui lòng thử lại');
       }
@@ -191,7 +191,7 @@ const Products = () => {
          setVariantQuantity(0);
          setIsAddVariantOpen(false);
 
-         await fetchPage(page);
+         await fetchPage(page, 1);
       } catch (err) {
          alert('Lỗi khi thêm biến thể: Vui lòng thử lại');
       }
@@ -219,7 +219,7 @@ const Products = () => {
             updatedData.low_stock_threshold
          );
 
-         await fetchPage(page);
+         await fetchPage(page, 1);
          setIsUpdateModalOpen(false);
 
          // Cập nhật selectedProduct
@@ -334,6 +334,7 @@ const Products = () => {
                   setShowDetail(true);
                   await fetchByItem(product.item_id);
                }}
+               setIsModalOpen={setIsModalOpen}
                setIsUpdateModalOpen={setIsUpdateModalOpen}
                setSelectedProductForUpdate={setSelectedProductForUpdate}
             />
@@ -345,7 +346,7 @@ const Products = () => {
                <Button
                   variant="secondary"
                   disabled={page === 1}
-                  onClick={() => fetchPage(page - 1)}
+                  onClick={() => fetchPage(page - 1, 1)}
                >
                   Trang trước
                </Button>
@@ -355,7 +356,7 @@ const Products = () => {
                <Button
                   variant="secondary"
                   disabled={page === totalPages}
-                  onClick={() => fetchPage(page + 1)}
+                  onClick={() => fetchPage(page + 1, 1)}
                >
                   Trang sau
                </Button>
@@ -392,6 +393,7 @@ const Products = () => {
          {/* Add Product Modal */}
          {(isModalOpen || isModalVisible) && (
             <CreateItemModal
+               title="Thêm Sản phẩm mới"
                isModalVisible={isModalVisible}
                variantCode={variantCode}
                variantQuantity={variantQuantity}
@@ -422,6 +424,7 @@ const Products = () => {
          {/* Update Product Modal */}
          {(isUpdateModalOpen || isUpdateModalVisible) && selectedProductForUpdate && (
             <UpdateProductModal
+               title={'Cập nhật vật phẩm'}
                isModalVisible={isUpdateModalVisible}
                selectedProduct={selectedProductForUpdate}
                unitId={unitId}

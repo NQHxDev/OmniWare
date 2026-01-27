@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Button from '@/components/Common/Button';
+import Confirm from '@/components/Common/Confirm';
 import AdvancedStockOperationModal from '@/components/Products/StockOperationModal';
 import { Item } from '@/stores/item.store';
 import { useVariantStore, Variant } from '@/stores/variant.store';
@@ -23,7 +24,7 @@ type ItemDetailProps = {
    onClose: () => void;
    onOpenAddVariant: () => void;
 
-   fetchPage: (page: number) => Promise<void>;
+   fetchPage: (page: number, item_type: number) => Promise<void>;
    onStockIn: () => void;
    onStockOut: () => void;
 };
@@ -53,6 +54,9 @@ export default function ItemDetailModal({
       null
    );
    const [isBulkOperation, setIsBulkOperation] = useState(true);
+
+   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+   const [pendingIds, setPendingIds] = useState<number[]>([]);
 
    const { clearByItem, fetchByItem } = useVariantStore();
 
@@ -100,7 +104,6 @@ export default function ItemDetailModal({
             stockQuantity,
             stockOperationType
          );
-
          await fetchByItem(selectedProduct.item_id);
       } else {
          // Xử lý nhập/xuất kho đơn lẻ
@@ -115,42 +118,44 @@ export default function ItemDetailModal({
 
       clearByItem(selectedProduct.item_id);
       await fetchByItem(selectedProduct.item_id);
-      await fetchPage(page);
+      await fetchPage(page, 1);
       // Reset và đóng modal
       setStockModalOpen(false);
       setStockQuantity(0);
       setSelectedVariantIdForSingle(null);
    };
 
-   const handleDeleteVariants = async () => {
+   const handleDeleteVariants = () => {
+      const variantIdsToDelete = isBulkOperation
+         ? selectedVariantIds
+         : selectedVariantIdForSingle
+           ? [selectedVariantIdForSingle]
+           : [];
+
+      if (variantIdsToDelete.length === 0) return;
+
+      // Lưu IDs vào bộ nhớ tạm và mở Modal confirm
+      setPendingIds(variantIdsToDelete);
+      setIsConfirmOpen(true);
+   };
+
+   const handleConfirmDelete = async () => {
       try {
-         const variantIdsToDelete = isBulkOperation
-            ? selectedVariantIds
-            : selectedVariantIdForSingle
-              ? [selectedVariantIdForSingle]
-              : [];
+         // Đóng modal ngay lập tức
+         setIsConfirmOpen(false);
 
-         if (variantIdsToDelete.length === 0) return;
+         // Gọi API xóa với pendingIds đã lưu
+         await window.api.deleteVariants(pendingIds);
 
-         const confirmed = window.confirm(
-            isBulkOperation
-               ? `Bạn có chắc chắn muốn xóa ${selectedVariantIds.length} biến thể đã chọn?`
-               : `Bạn có chắc chắn muốn xóa biến thể này?`
-         );
-
-         if (!confirmed) return;
-
-         // Gọi API xóa
-         await window.api.deleteVariants(variantIdsToDelete);
+         // Xóa thành công thì clear state
          setSelectedVariantIds([]);
-
          clearByItem(selectedProduct.item_id);
          await fetchByItem(selectedProduct.item_id);
-         await fetchPage(page);
-         // Đóng modal
+         await fetchPage(page, 1);
+
          setStockModalOpen(false);
          setSelectedVariantIdForSingle(null);
-      } catch {
+      } catch (error) {
          alert('Delete Variant Error');
       }
    };
@@ -254,13 +259,22 @@ export default function ItemDetailModal({
                      {/* Button Xoá */}
                      <Button
                         variant="secondary"
-                        disabled={!selectedVariantIds.length}
+                        disabled={!selectedVariantIds.length && !selectedVariantIdForSingle}
                         onClick={handleDeleteVariants}
                         className="h-10 px-4 flex items-center justify-center whitespace-nowrap"
                      >
                         <Trash2 className="h-4 w-4 mr-1.5" />
                         <span>Xoá</span>
                      </Button>
+
+                     {/* Modal Confirm Delete */}
+                     <Confirm
+                        isOpen={isConfirmOpen}
+                        title="Xác nhận xóa"
+                        message={`Bạn có chắc chắn muốn xóa ${pendingIds.length} biến thể đã chọn?`}
+                        onConfirm={handleConfirmDelete}
+                        onCancel={() => setIsConfirmOpen(false)}
+                     />
                   </div>
 
                   {/* Variant Table */}

@@ -3,6 +3,7 @@ import Button from '@/components/Common/Button';
 import Select, { SelectOption } from '@/components/Common/Select';
 
 type UpdateItemProps = {
+   title: string;
    isModalVisible: boolean;
    selectedProduct: {
       item_id: number;
@@ -29,6 +30,7 @@ type UpdateItemProps = {
 };
 
 export default function UpdateProductModal({
+   title,
    isModalVisible,
    selectedProduct,
    unitId,
@@ -131,7 +133,7 @@ export default function UpdateProductModal({
                {/* Header */}
                <div className="flex items-center justify-between p-6 border-b border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900">
-                     Cập nhật sản phẩm: {selectedProduct.item_name}
+                     {title}: {selectedProduct.item_name}
                   </h3>
                   <button
                      onClick={() => setIsModalOpen(false)}

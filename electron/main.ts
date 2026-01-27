@@ -37,7 +37,7 @@ function createWindow() {
       },
    });
 
-   win.webContents.openDevTools();
+   // win.webContents.openDevTools();
    win.maximize();
 
    win.webContents.on('did-finish-load', () => {
@@ -91,13 +91,16 @@ app.whenReady().then(() => {
          (_, item_id, item_name, item_code, unit_id, low_stock_threshold) =>
             ItemRepository.update({ item_id, item_name, item_code, unit_id, low_stock_threshold })
       );
-      ipcMain.handle('items:get-paged', (_, page, limit) => {
+      ipcMain.handle('items:get-paged', (_, page, type_item, limit) => {
          return {
-            items: ItemRepository.getPaged({ page, limit }),
-            total: ItemRepository.countAll(),
+            items: ItemRepository.getPaged({ page, type_item, limit }),
+            total: ItemRepository.countAll(type_item),
          };
       });
       ipcMain.handle('items:delete', (_, item_id) => ItemRepository.delete(item_id));
+      ipcMain.handle('items:stock-inventory', (_, item_id, quantity, operation) =>
+         ItemRepository.stockInventoryItem(item_id, quantity, operation)
+      );
 
       // Variant
       ipcMain.handle('variants:get-by-item', (_, itemId: number) =>

@@ -21,7 +21,7 @@ type ItemState = {
    total: number;
    isLoadingItem: boolean;
 
-   fetchPage: (page: number) => Promise<void>;
+   fetchPage: (page: number, type_item: number) => Promise<void>;
 };
 
 export const useItemStore = create<ItemState>((set) => ({
@@ -31,20 +31,24 @@ export const useItemStore = create<ItemState>((set) => ({
    total: 0,
    isLoadingItem: false,
 
-   fetchPage: async (page: number) => {
+   fetchPage: async (page: number, type_item: number) => {
       const settings = useSettingsStore.getState().settings;
       const limitSetting = settings.limit;
 
       set({ isLoadingItem: true });
 
-      const { items, total } = await window.api.getItemsPaged(page, limitSetting);
-
-      set({
-         items,
-         total,
-         limit: limitSetting,
-         page,
-         isLoadingItem: false,
-      });
+      try {
+         const { items, total } = await window.api.getItemsPaged(page, type_item, limitSetting);
+         set({
+            items,
+            total,
+            limit: limitSetting,
+            page,
+            isLoadingItem: false,
+         });
+      } catch (error) {
+         console.error('Error fetching items:', error);
+         set({ isLoadingItem: false });
+      }
    },
 }));
