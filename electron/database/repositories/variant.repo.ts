@@ -288,4 +288,19 @@ export const VariantRepository = {
 
       return executeDelete(variant_ids);
    },
+
+   existedVariantCode(item_id: number, variant_code: string) {
+      try {
+         const db = getDb();
+         const row = db
+            .prepare('SELECT 1 FROM item_variants WHERE item_id = ? AND variant_code = ? LIMIT 1')
+            .get(item_id, variant_code);
+
+         // Đã tồn tại (true), ngược lại là chưa (false)
+         return !!row;
+      } catch (error) {
+         console.error('Check VariantCode Error:', error);
+         throw error;
+      }
+   },
 };

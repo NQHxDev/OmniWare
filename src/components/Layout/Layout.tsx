@@ -15,7 +15,7 @@ const Layout: React.FC<PropsWithChildren> = ({ children }) => {
             <Sidebar isCollapsed={isCollapsed} onToggle={() => setIsCollapsed((prev) => !prev)} />
          </aside>
 
-         {/* Overlay cho mobile (nếu cần responsive) */}
+         {/* Overlay cho mobile */}
          {!isCollapsed && (
             <div
                className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"

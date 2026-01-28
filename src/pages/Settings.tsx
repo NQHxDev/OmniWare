@@ -166,7 +166,7 @@ const Settings: React.FC = () => {
                         <div className="space-y-4">
                            <div>
                               <label className="block text-sm font-medium text-gray-900 mb-1">
-                                 Số lượng item mỗi trang
+                                 Số lượng dòng mỗi trang
                               </label>
                               <p className="text-sm text-gray-600 mb-4">
                                  Điều chỉnh số lượng item hiển thị phù hợp với màn hình

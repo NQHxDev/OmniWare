@@ -265,7 +265,7 @@ export default function InventoryStockModal({
                      </div>
                      <div className="text-right">
                         <span className="font-semibold text-gray-900">
-                           {quantity.toLocaleString()} cái
+                           {quantity.toLocaleString()} {item.unit_name}
                         </span>
                      </div>
 
@@ -274,7 +274,7 @@ export default function InventoryStockModal({
                      </div>
                      <div className="text-right">
                         <span className="font-bold text-lg text-gray-900">
-                           {getNewQuantity().toLocaleString()} cái
+                           {getNewQuantity().toLocaleString()} {item.unit_name}
                         </span>
                      </div>
                   </div>

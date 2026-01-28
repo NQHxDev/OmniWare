@@ -25,7 +25,7 @@ const navigation: NavigationItem[] = [
    { name: 'Sản phẩm', icon: Package, href: '/products' },
    { name: 'Vật tư', icon: Archive, href: '/materials' },
    { name: 'Kho', icon: Warehouse, href: '/inventory' },
-   { name: 'Nhật ký', icon: FileText, href: '/transactions' },
+   { name: 'Lịch sử', icon: FileText, href: '/transactions' },
    { name: 'Cài đặt', icon: Settings, href: '/settings' },
 ];
 

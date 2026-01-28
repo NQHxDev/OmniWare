@@ -137,13 +137,7 @@ const Products = () => {
       }
 
       try {
-         await window.api.createItem(
-            itemName,
-            'IT_' + itemCode,
-            typeId,
-            Number(unitId),
-            lowStockThreshold
-         );
+         await window.api.createItem(itemName, itemCode, typeId, Number(unitId), lowStockThreshold);
 
          // reset form
          setItemName('');
@@ -400,10 +394,8 @@ const Products = () => {
          {/* Add Product Modal */}
          {(isModalOpen || isModalVisible) && (
             <CreateItemModal
-               title="Thêm Sản phẩm mới"
+               title="sản phẩm"
                isModalVisible={isModalVisible}
-               variantCode={variantCode}
-               variantQuantity={variantQuantity}
                unitId={unitId}
                setIsModalOpen={setIsModalOpen}
                handleSubmit={handleSubmit}
@@ -418,6 +410,7 @@ const Products = () => {
          {/* Add Variant Modal */}
          {isAddVariantOpen && (
             <CreateVariantModal
+               selectedItem={selectedProduct}
                variantName={variantName}
                variantCode={variantCode}
                setVariantName={setVariantName}

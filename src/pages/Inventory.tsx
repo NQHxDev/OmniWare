@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMemo, useState, useEffect } from 'react';
-import { Plus, Search, Filter, Package } from 'lucide-react';
+import { Plus, Search, Filter, Package, Edit, Trash2, Minus } from 'lucide-react';
 import Button from '../components/Common/Button';
-import { IUnit, useUnitStore } from '../stores/unit.store';
+import { useUnitStore } from '../stores/unit.store';
 import { Item, useItemStore } from '../stores/item.store';
 import CreateItemModal from '@/components/Products/CreateItemModal';
 import UpdateProductModal from '@/components/Products/UpdateProduct';
@@ -113,12 +113,13 @@ const Inventory = () => {
       try {
          const res = await window.api.createItem(
             itemName,
-            'IV_' + itemCode,
+            itemCode,
             typeId, // = 3 for Inventory
             Number(unitId),
             lowStockThreshold
          );
 
+         // Variant ghosts
          await window.api.createVariant(
             res.item_id,
             itemName,
@@ -387,7 +388,7 @@ const Inventory = () => {
                                        onClick={() => handleStockIn(item)}
                                        aria-label={`Nhập kho ${item.item_name}`}
                                     >
-                                       Nhập
+                                       <Plus className="h-4 w-4" />
                                     </Button>
 
                                     {/* Stock Out Button */}
@@ -398,21 +399,20 @@ const Inventory = () => {
                                        onClick={() => handleStockOut(item)}
                                        aria-label={`Xuất kho ${item.item_name}`}
                                     >
-                                       Xuất
+                                       <Minus className="h-4 w-4" />
                                     </Button>
 
                                     {/* Edit Button */}
                                     <Button
                                        variant="ghost"
                                        size="sm"
-                                       className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                        onClick={() => {
                                           setSelectedItemForUpdate(item);
                                           setIsUpdateModalOpen(true);
                                        }}
                                        aria-label={`Sửa ${item.item_name}`}
                                     >
-                                       Sửa
+                                       <Edit className="h-4 w-4" />
                                     </Button>
 
                                     {/* Delete Button */}
@@ -423,7 +423,7 @@ const Inventory = () => {
                                        onClick={() => handleDeleteClick(item)}
                                        aria-label={`Xóa ${item.item_name}`}
                                     >
-                                       Xóa
+                                       <Trash2 className="h-4 w-4 text-red-500" />
                                     </Button>
                                  </div>
                               </td>
@@ -459,7 +459,7 @@ const Inventory = () => {
          {/* Add Item Modal */}
          {(isModalOpen || isModalVisible) && (
             <CreateItemModal
-               title="Thêm vật phẩm kho mới"
+               title="vật phẩm"
                isModalVisible={isModalVisible}
                unitId={unitId}
                setIsModalOpen={setIsModalOpen}

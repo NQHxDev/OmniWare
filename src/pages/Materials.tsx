@@ -172,6 +172,13 @@ const Materials = () => {
             variantQuantity
          );
 
+         await window.api.createTransaction({
+            type: 'create',
+            itemId: selectedMaterial.item_id,
+            variantId: res.lastInsertRowid,
+            quantity: variantQuantity,
+         });
+
          // cập nhật store
          useVariantStore.getState().addVariant(selectedMaterial.item_id, {
             variant_id: res.lastInsertRowid,
@@ -463,10 +470,8 @@ const Materials = () => {
          {/* Add Material Modal */}
          {(isModalOpen || isModalVisible) && (
             <CreateItemModal
-               title="Thêm Vật tư mới"
+               title="vật tư"
                isModalVisible={isModalVisible}
-               variantCode={variantCode}
-               variantQuantity={variantQuantity}
                unitId={unitId}
                setIsModalOpen={setIsModalOpen}
                handleSubmit={handleSubmit}
@@ -481,6 +486,7 @@ const Materials = () => {
          {/* Add Variant Modal */}
          {isAddVariantOpen && (
             <CreateVariantModal
+               selectedItem={selectedMaterial}
                variantName={variantName}
                variantCode={variantCode}
                setVariantName={setVariantName}

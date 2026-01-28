@@ -133,6 +133,9 @@ app.whenReady().then(async () => {
       ipcMain.handle('item:get-low-stock', (_, type_item) =>
          ItemRepository.getItemLowStock(type_item)
       );
+      ipcMain.handle('item:exits-code', (_, item_code) =>
+         ItemRepository.existedItemCode(item_code)
+      );
 
       // Variant
       ipcMain.handle('variants:get-by-item', (_, itemId: number) =>
@@ -169,6 +172,9 @@ app.whenReady().then(async () => {
                quantity,
                operation,
             })
+      );
+      ipcMain.handle('variants:exits-code', (_, item_id, variant_code) =>
+         VariantRepository.existedVariantCode(item_id, variant_code)
       );
 
       // Transaction

@@ -9,15 +9,14 @@ import {
    FiPackage,
    FiClock,
 } from 'react-icons/fi';
-import { FilePlus, PackagePlus, PackageMinus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { FilePlus, PackagePlus, PackageMinus, ChevronDown, ChevronUp } from 'lucide-react';
 import Button from '../components/Common/Button';
 import { useSettingsStore } from '../stores/settingsStore';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import dayjs from 'dayjs';
 
 // Define transaction types
-export type TransactionType = 'create' | 'in' | 'out' | 'delete';
+export type TransactionType = 'create' | 'in' | 'out';
 
 export interface Transaction {
    history_id: number;
@@ -73,7 +72,7 @@ const Transactions = () => {
 
    // Fetch transactions
    const fetchTransactions = useCallback(
-      async (pageNum: number = page) => {
+      async (pageNum: number) => {
          setIsLoading(true);
          setError(null);
 
@@ -95,14 +94,13 @@ const Transactions = () => {
             setTransactions(result.data);
             setTotal(result.total);
             setPage(pageNum);
-         } catch (err) {
-            setError('Không thể tải nhật ký giao dịch. Vui lòng thử lại.');
+         } catch {
+            setError('Không thể tải nhật ký giao dịch.');
          } finally {
             setIsLoading(false);
          }
       },
       [
-         page,
          searchTerm,
          selectedTypes,
          selectedItemTypes,
@@ -171,13 +169,6 @@ const Transactions = () => {
             borderColor: 'border-amber-200',
             iconColor: 'text-amber-600',
          },
-         delete: {
-            label: 'Xóa',
-            icon: Trash2,
-            color: 'bg-red-100 text-red-800',
-            borderColor: 'border-red-200',
-            iconColor: 'text-red-600',
-         },
       };
       return configs[type];
    };
@@ -202,7 +193,6 @@ const Transactions = () => {
       { value: 'create', label: 'Tạo mới' },
       { value: 'in', label: 'Nhập kho' },
       { value: 'out', label: 'Xuất kho' },
-      { value: 'delete', label: 'Xóa' },
    ];
 
    // Item type options
@@ -229,7 +219,7 @@ const Transactions = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                     <h1 className="text-2xl font-bold text-gray-900">Nhật ký giao dịch</h1>
+                     <h1 className="text-2xl font-bold text-gray-900">Lịch sử giao dịch</h1>
                      <p className="text-gray-600 mt-1">Theo dõi tất cả hoạt động trong hệ thống</p>
                   </div>
                   <div className="flex gap-2">
@@ -555,8 +545,8 @@ const Transactions = () => {
                                           <div className="flex justify-center">
                                              <div className="space-y-1">
                                                 <div className="text-sm text-gray-900">
-                                                   {transaction.type === 'delete'
-                                                      ? 'Đã xóa'
+                                                   {transaction.type === 'create'
+                                                      ? 'Đã thêm'
                                                       : 'Thành công'}
                                                 </div>
                                              </div>
@@ -574,73 +564,46 @@ const Transactions = () => {
                         <div className="px-6 py-4 border-t border-gray-200">
                            <div className="flex items-center justify-between">
                               <div className="text-sm text-gray-700">
-                                 Hiển thị{' '}
-                                 <span className="font-medium">
-                                    {(page - 1) * itemsPerPage + 1}
-                                 </span>
-                                 {' - '}
-                                 <span className="font-medium">
-                                    {Math.min(page * itemsPerPage, total)}
-                                 </span>
-                                 {' trên '}
-                                 <span className="font-medium">{total.toLocaleString()}</span>
-                                 {' kết quả'}
+                                 Trang <b>{page}</b> / {totalPages}
                               </div>
+
                               <div className="flex items-center gap-2">
+                                 {/* Previous */}
                                  <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={() => fetchTransactions(page - 1)}
                                     disabled={page === 1 || isLoading}
+                                    onClick={() => fetchTransactions(page - 1)}
                                  >
                                     Trước
                                  </Button>
-                                 <div className="flex items-center gap-1">
-                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                       let pageNum;
-                                       if (totalPages <= 5) {
-                                          pageNum = i + 1;
-                                       } else if (page <= 3) {
-                                          pageNum = i + 1;
-                                       } else if (page >= totalPages - 2) {
-                                          pageNum = totalPages - 4 + i;
-                                       } else {
-                                          pageNum = page - 2 + i;
-                                       }
 
-                                       return (
-                                          <Button
-                                             key={pageNum}
-                                             variant={page === pageNum ? 'primary' : 'secondary'}
-                                             size="sm"
-                                             onClick={() => fetchTransactions(pageNum)}
-                                             disabled={isLoading}
-                                             className="min-w-10"
-                                          >
-                                             {pageNum}
-                                          </Button>
-                                       );
-                                    })}
-                                    {totalPages > 5 && page < totalPages - 2 && (
-                                       <>
-                                          <span className="px-2 text-gray-500">...</span>
-                                          <Button
-                                             variant="secondary"
-                                             size="sm"
-                                             onClick={() => fetchTransactions(totalPages)}
-                                             disabled={isLoading}
-                                             className="min-w-10"
-                                          >
-                                             {totalPages}
-                                          </Button>
-                                       </>
-                                    )}
-                                 </div>
+                                 {/* First page */}
                                  <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={() => fetchTransactions(page + 1)}
+                                    disabled={page === 1}
+                                    onClick={() => fetchTransactions(1)}
+                                 >
+                                    1
+                                 </Button>
+
+                                 {/* Current page */}
+                                 <Button
+                                    variant="primary"
+                                    size="sm"
+                                    disabled
+                                    className="cursor-default"
+                                 >
+                                    {page}
+                                 </Button>
+
+                                 {/* Next */}
+                                 <Button
+                                    variant="secondary"
+                                    size="sm"
                                     disabled={page === totalPages || isLoading}
+                                    onClick={() => fetchTransactions(page + 1)}
                                  >
                                     Sau
                                  </Button>

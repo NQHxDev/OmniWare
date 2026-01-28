@@ -41,6 +41,7 @@ declare global {
          ) => Promise<any>;
          countItem: (type_item: number) => Promise<any>;
          getItemLowStock: (type_item: number) => Promise<any>;
+         existedItemCode: (item_code: string) => Promise<any>;
 
          // Variant
          getVariantsByItem: (itemId: number) => Promise<any>;
@@ -63,6 +64,7 @@ declare global {
          ) => Promise<any>;
 
          deleteVariants: (variantIdsToDelete: number[]) => Promise<any>;
+         existedVariantCode: (item_id: number, variant_code: string) => Promise<any>;
 
          // Transaction
          getTransactions: (params: GetTransactionsParams) => Promise<any>;

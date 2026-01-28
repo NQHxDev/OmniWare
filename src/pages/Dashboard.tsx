@@ -1,6 +1,14 @@
 import { Archive, CheckCircle, Package, RefreshCw, Warehouse } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+interface InventoryItemDashboard {
+   item_id: number;
+   item_name: string;
+   item_code: string;
+   quantity: number;
+   unit_name: string;
+}
+
 const Dashboard = () => {
    const [counts, setCounts] = useState({
       products: 0,
@@ -55,8 +63,8 @@ const Dashboard = () => {
       },
    ];
 
-   const [warningMaterials, setWarningMaterials] = useState([]);
-   const [warningInventory, setWarningInventory] = useState([]);
+   const [warningMaterials, setWarningMaterials] = useState<InventoryItemDashboard[]>([]);
+   const [warningInventory, setWarningInventory] = useState<InventoryItemDashboard[]>([]);
    const [loading, setLoading] = useState(true);
 
    useEffect(() => {
@@ -151,8 +159,8 @@ const Dashboard = () => {
                                  <span
                                     className={`px-3 py-1 text-xs font-bold rounded-full ${
                                        material.quantity === 0
-                                          ? 'bg-red-100 text-red-700'
-                                          : 'bg-orange-100 text-orange-700'
+                                          ? 'text-red-600 bg-red-50'
+                                          : 'text-yellow-600 bg-yellow-50'
                                     }`}
                                  >
                                     {material.quantity === 0 ? 'Hết hàng' : 'Sắp hết'}
@@ -215,8 +223,8 @@ const Dashboard = () => {
                                  <span
                                     className={`px-3 py-1 text-xs font-bold rounded-full ${
                                        inventory.quantity === 0
-                                          ? 'bg-red-100 text-red-700'
-                                          : 'bg-orange-100 text-orange-700'
+                                          ? 'text-red-600 bg-red-50'
+                                          : 'text-yellow-600 bg-yellow-50'
                                     }`}
                                  >
                                     {inventory.quantity === 0 ? 'Hết hàng' : 'Sắp hết'}

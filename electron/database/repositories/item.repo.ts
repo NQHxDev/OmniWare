@@ -1,6 +1,30 @@
 import { getDb } from '..';
 
 export const ItemRepository = {
+   getSearchGlobal() {
+      try {
+         const db = getDb();
+         return db
+            .prepare(
+               `
+               SELECT
+               i.item_id,
+               i.item_name,
+               i.item_code,
+               it.type_code AS item_type,
+               i.unit,
+               i.total_quantity
+               FROM items i
+               JOIN item_types it ON it.type_id = i.type_id
+            `
+            )
+            .all();
+      } catch (error) {
+         console.error('Get All Item Error:', error);
+         throw error;
+      }
+   },
+
    getAll() {
       try {
          const db = getDb();
@@ -206,10 +230,23 @@ export const ItemRepository = {
                `UPDATE items SET total_quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE item_id = ?`
             ).run(newQty, itemId);
 
+            const variantItemId = db
+               .prepare('SELECT variant_id FROM item_variants WHERE item_id = ? Limit 1')
+               .get(itemId) as { variant_id: number };
+
+            if (!variantItemId) throw new Error('Biến thể không tồn tại');
+
             db.prepare(
                `INSERT INTO stock_history (item_id, variant_id, operation, quantity, previous_quantity, new_quantity)
                 VALUES (?, ?, ?, ?, ?, ?)`
-            ).run(itemId, 0, operation, quantity, item.total_quantity, newQty);
+            ).run(
+               itemId,
+               variantItemId.variant_id,
+               operation,
+               quantity,
+               item.total_quantity,
+               newQty
+            );
 
             return { success: true, currentStock: newQty };
          });
@@ -221,14 +258,16 @@ export const ItemRepository = {
       }
    },
 
-   // existedItemCode(item_code: string) {
-   //    try {
-   //       const db = getDb();
+   existedItemCode(item_code: string) {
+      try {
+         const db = getDb();
+         const row = db.prepare('SELECT 1 FROM items WHERE item_code = ? LIMIT 1').get(item_code);
 
-   //       return false;
-   //    } catch (error) {
-   //       console.error('Check ItemCode Error:', error);
-   //       throw error;
-   //    }
-   // },
+         // Đã tồn tại (true), ngược lại là chưa (false)
+         return !!row;
+      } catch (error) {
+         console.error('Check ItemCode Error:', error);
+         throw error;
+      }
+   },
 };

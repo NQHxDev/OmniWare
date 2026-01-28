@@ -72,6 +72,7 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('items:stock-inventory', item_id, quantity, operation),
    countItem: (type_item: number) => ipcRenderer.invoke('item:get-count', type_item),
    getItemLowStock: (type_item: number) => ipcRenderer.invoke('item:get-low-stock', type_item),
+   existedItemCode: (item_code: string) => ipcRenderer.invoke('item:exits-code', item_code),
 
    // Variant
    getVariantsByItem: (itemId: number) => ipcRenderer.invoke('variants:get-by-item', itemId),
@@ -82,6 +83,8 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('variants:stock-single-variant', variant_id, quantity, operation),
    stockMultipleVariants: (variant_ids: number[], quantity: number, operation: 'in' | 'out') =>
       ipcRenderer.invoke('variants:stock-multiple-variant', variant_ids, quantity, operation),
+   existedVariantCode: (item_id: number, variant_code: string) =>
+      ipcRenderer.invoke('variants:exits-code', item_id, variant_code),
 
    // Transaction
    getTransactions: (params: GetTransactionsParams) =>

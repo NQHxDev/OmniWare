@@ -1,11 +1,10 @@
 import Button from '@/components/Common/Button';
 import Select, { SelectOption } from '@/components/Common/Select';
+import { useEffect, useRef, useState } from 'react';
 
 type CreateItemProps = {
    title: string;
    isModalVisible: boolean;
-   variantCode?: string;
-   variantQuantity?: number;
    unitId: string | number | null;
 
    setIsModalOpen: (value: boolean) => void;
@@ -29,6 +28,34 @@ export default function CreateItemModal({
    setLowStockThreshold,
    unitOptions,
 }: CreateItemProps) {
+   const inputRef = useRef<HTMLInputElement>(null);
+   const [stockThresholdDefault, setStockThresholdDefault] = useState(-1);
+   const [isItemName, setIsItemName] = useState<boolean>(true);
+   const [isItemCode, setIsItemCode] = useState<boolean>(true);
+   const [itemCodeError, setItemCodeError] = useState<string>('');
+
+   useEffect(() => {
+      if (isModalVisible && inputRef.current) {
+         setTimeout(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+         }, 100);
+      } else {
+         setStockThresholdDefault(-1);
+      }
+   }, [isModalVisible]);
+
+   const checkDuplicateCode = async (code: string) => {
+      const isExisted = await window.api.existedItemCode(code);
+      if (isExisted) {
+         setItemCodeError(': Đã tồn tại');
+         setIsItemCode(true);
+      } else {
+         setItemCodeError('');
+         setIsItemCode(false);
+      }
+   };
+
    return (
       <div className="fixed inset-0 z-60 overflow-y-auto">
          {/* Backdrop */}
@@ -51,7 +78,7 @@ export default function CreateItemModal({
             >
                {/* Header */}
                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Thêm {title} mới</h3>
                   <button
                      onClick={() => setIsModalOpen(false)}
                      className="text-gray-400 hover:text-gray-500 p-1"
@@ -66,11 +93,15 @@ export default function CreateItemModal({
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Tên sản phẩm *
+                              Tên {title} *
                            </label>
                            <input
                               type="text"
-                              onChange={(e) => setItemName(e.target.value)}
+                              onChange={(e) => {
+                                 const value = e.target.value;
+                                 setItemName(value);
+                                 setIsItemName(value === '');
+                              }}
                               placeholder="Ví dụ: Mẫu ABC"
                               className="
                                  w-full px-3 py-2
@@ -86,11 +117,20 @@ export default function CreateItemModal({
                         </div>
                         <div>
                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Mã sản phẩm
+                              Mã {title} *{' '}
+                              {itemCodeError && (
+                                 <span className="text-red-500">{itemCodeError}</span>
+                              )}
                            </label>
                            <input
                               type="text"
-                              onChange={(e) => setItemCode(e.target.value)}
+                              onChange={(e) => {
+                                 const value = e.target.value;
+                                 if (itemCodeError) setItemCodeError('');
+                                 setItemCode(value);
+                                 setIsItemCode(value === '');
+                              }}
+                              onBlur={(e) => checkDuplicateCode(e.target.value)}
                               placeholder="Ví dụ: ABC001"
                               className="
                                  w-full px-3 py-2
@@ -118,8 +158,23 @@ export default function CreateItemModal({
                               Ngưỡng cảnh báo
                            </label>
                            <input
+                              ref={inputRef}
+                              min="-1"
                               type="text"
-                              onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+                              value={stockThresholdDefault === -1 ? '' : stockThresholdDefault}
+                              onChange={(e) => {
+                                 const val = e.target.value;
+                                 if (val === '') {
+                                    setLowStockThreshold(-1);
+                                    return;
+                                 }
+                                 // Chỉ cho phép nhập số
+                                 const numValue = Number(val);
+                                 if (!isNaN(numValue)) {
+                                    setStockThresholdDefault(numValue);
+                                    setLowStockThreshold(numValue);
+                                 }
+                              }}
                               placeholder="Không cảnh báo"
                               className="
                                  w-full px-3 py-2
@@ -135,15 +190,22 @@ export default function CreateItemModal({
                         </div>
                      </div>
 
-                     <div className="pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                        <Button
-                           type="reset"
-                           variant="secondary"
-                           onClick={() => setIsModalOpen(false)}
-                        >
-                           Hủy
-                        </Button>
-                        <Button type="submit">Lưu sản phẩm</Button>
+                     <div className="pt-4 border-t border-gray-200 flex flex-col space-y-3">
+                        <div className="flex justify-end space-x-3">
+                           <Button
+                              type="reset"
+                              variant="secondary"
+                              onClick={() => setIsModalOpen(false)}
+                           >
+                              Hủy
+                           </Button>
+                           <Button
+                              disabled={isItemName || isItemCode || !!itemCodeError}
+                              type="submit"
+                           >
+                              Lưu sản phẩm
+                           </Button>
+                        </div>
                      </div>
                   </form>
                </div>
