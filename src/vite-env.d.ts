@@ -70,6 +70,10 @@ declare global {
          getTransactions: (params: GetTransactionsParams) => Promise<any>;
          createTransaction: (params: CreateTransactionParams) => Promise<any>;
          getTodayNetFlow: () => Promise<any>;
+
+         // System
+         backupData: () => Promise<any>;
+         restoreData: () => Promise<any>;
       };
    }
 }

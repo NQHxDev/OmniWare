@@ -22,7 +22,7 @@ const defaultSettings: AppSettings = {
    limit: 8,
    theme: 'light',
    language: 'vi',
-   autoRefresh: true,
+   autoRefresh: false,
    refreshInterval: 30,
    logRetention: 3,
 };

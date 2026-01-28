@@ -17,6 +17,7 @@ import {
    CreateTransactionParams,
    TransactionRepository,
 } from './database/repositories/transaction.repo';
+import { backupData, restoreData } from './database/handle.database';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -185,6 +186,10 @@ app.whenReady().then(async () => {
          TransactionRepository.createTransaction(params)
       );
       ipcMain.handle('transaction:today-net-flow', (_) => TransactionRepository.getTodayNetFlow());
+
+      // System
+      ipcMain.handle('backup:data', backupData);
+      ipcMain.handle('restore:data', restoreData);
    } catch (error) {
       console.error('Khởi tạo Database thất bại:', error);
    }

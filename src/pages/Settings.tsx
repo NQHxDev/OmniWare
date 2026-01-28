@@ -545,6 +545,51 @@ const Settings: React.FC = () => {
                         </div>
                      </div>
                   </div>
+
+                  {/* Backup và Restore Data */}
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                     <div className="border-b border-gray-200 px-6 py-4 bg-gray-50">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                           Backup & Restore Data
+                        </h3>
+                     </div>
+
+                     <div className="p-6 space-y-4">
+                        <button
+                           onClick={async () => {
+                              const res = await window.api.backupData();
+                              if (res?.success) alert('Backup thành công');
+                           }}
+                           className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 active:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                           {isSaving ? (
+                              <>
+                                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                 <span>Đang lưu...</span>
+                              </>
+                           ) : (
+                              <>
+                                 <FiSave className="w-5 h-5" />
+                                 <span>Backup dữ liệu</span>
+                              </>
+                           )}
+                        </button>
+
+                        <button
+                           onClick={async () => {
+                              if (!confirm('Restore sẽ ghi đè toàn bộ dữ liệu. Tiếp tục?')) return;
+                              const res = await window.api.restoreData();
+                              if (res?.success) {
+                                 alert('Restore thành công, vui lòng khởi động lại app');
+                              }
+                           }}
+                           className="w-full flex items-center justify-center space-x-2 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                           <FiRotateCcw className="w-5 h-5" />
+                           <span>Khôi phục dữ liệu</span>
+                        </button>
+                     </div>
+                  </div>
                </div>
             </div>
          </div>

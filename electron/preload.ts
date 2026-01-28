@@ -92,4 +92,8 @@ contextBridge.exposeInMainWorld('api', {
    createTransaction: (params: CreateTransactionParams) =>
       ipcRenderer.invoke('transaction:create', params),
    getTodayNetFlow: () => ipcRenderer.invoke('transaction:today-net-flow'),
+
+   // System
+   backupData: () => ipcRenderer.invoke('backup:data'),
+   restoreData: () => ipcRenderer.invoke('restore:data'),
 });
