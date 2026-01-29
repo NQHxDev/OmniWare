@@ -257,7 +257,8 @@ const Transactions = () => {
                            value={searchTerm}
                            onChange={(e) => setSearchTerm(e.target.value)}
                            onKeyPress={(e) => e.key === 'Enter' && applyFilters()}
-                           className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400"
+                           className="
+                              w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400"
                         />
                      </div>
                   </div>
@@ -268,7 +269,7 @@ const Transactions = () => {
                         className="flex items-center"
                      >
                         <FiFilter className="w-4 h-4 mr-2" />
-                        Lọc{' '}
+                        Lọc
                         {showFilters ? (
                            <ChevronUp className="w-4 h-4 ml-1" />
                         ) : (

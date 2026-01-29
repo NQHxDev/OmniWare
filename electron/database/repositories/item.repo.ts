@@ -88,7 +88,12 @@ export const ItemRepository = {
                JOIN item_types it ON it.type_id = i.type_id
                JOIN units u ON u.unit_id = i.unit_id
                WHERE (i.type_id = ? OR ? = 0) -- 0: get All
-               ORDER BY i.item_id DESC
+               ORDER BY
+                  -- Ưu tiên chạm ngưỡng cảnh báo lên đầu
+                  (i.total_quantity <= i.low_stock_threshold) DESC,
+                  -- Trong cùng nhóm ít hơn xếp trước
+                  i.total_quantity ASC,
+                  i.item_id DESC
                LIMIT ? OFFSET ?
             `
             )

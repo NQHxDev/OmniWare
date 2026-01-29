@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Button from '@/components/Common/Button';
 import Confirm from '@/components/Common/Confirm';
-import AdvancedStockOperationModal from '@/components/Products/StockOperationModal';
+import StockOperationModal from '@/components/Materials/StockOperationModal';
 import { Item } from '@/stores/item.store';
 import { useVariantStore, Variant } from '@/stores/variant.store';
 import { Minus, PackageOpen, Plus, Search, Trash2 } from 'lucide-react';
@@ -388,7 +388,7 @@ export default function ItemDetailModal({
          </div>
 
          {/* Stock Operation Modal */}
-         <AdvancedStockOperationModal
+         <StockOperationModal
             isOpen={stockModalOpen}
             operationType={stockOperationType}
             quantity={stockQuantity}

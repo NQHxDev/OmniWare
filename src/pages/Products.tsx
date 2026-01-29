@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMemo, useState, useEffect } from 'react';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, ChevronUp, ChevronDown } from 'lucide-react';
 import Button from '../components/Common/Button';
 import { SelectOption } from '../components/Common/Select';
 import { useUnitStore } from '../stores/unit.store';
@@ -22,6 +22,7 @@ const Products = () => {
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [isDrawerVisible, setIsDrawerVisible] = useState<boolean>(false);
    const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+   const [showFilters, setShowFilters] = useState(false);
 
    // Animation states
    const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -32,6 +33,7 @@ const Products = () => {
    const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
    const [selectedVariantIds, setSelectedVariantIds] = useState<number[]>([]);
    const [stockAction, setStockAction] = useState<'IN' | 'OUT' | null>(null);
+   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
 
    // Data hooks
    const { units, fetchUnits } = useUnitStore();
@@ -53,6 +55,12 @@ const Products = () => {
    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
    const [isUpdateModalVisible, setIsUpdateModalVisible] = useState<boolean>(false);
    const [selectedProductForUpdate, setSelectedProductForUpdate] = useState<Item | null>(null);
+
+   const typeOptions: { value: string; label: string }[] = [
+      { value: 'in_stock', label: 'Còn hàng' },
+      { value: 'low_stock', label: 'Sắp hết' },
+      { value: 'out_of_stock', label: 'Hết hàng' },
+   ];
 
    useEffect(() => {
       fetchUnits();
@@ -289,18 +297,19 @@ const Products = () => {
 
          {/* Filters and Search */}
          <div className="bg-white rounded-lg shadow p-4 mb-6">
+            {/* Top bar */}
             <div className="flex flex-col md:flex-row gap-4">
+               {/* Search */}
                <div className="flex-1">
                   <div className="relative">
-                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                      <input
                         type="search"
                         placeholder="Tìm kiếm sản phẩm..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="
-                           w-full
-                           pl-10 pr-4 py-2 border
+                           w-full pl-10 pr-4 py-2 border
                            focus:outline-none
                            border-gray-300 rounded-lg
                            focus:ring-2 focus:ring-gray-900
@@ -310,14 +319,58 @@ const Products = () => {
                      />
                   </div>
                </div>
+
+               {/* Buttons */}
                <div className="flex gap-2">
-                  <Button variant="secondary" className="flex items-center">
+                  <Button
+                     variant="secondary"
+                     onClick={() => setShowFilters(!showFilters)}
+                     className="flex items-center"
+                  >
                      <Filter className="h-4 w-4 mr-2" />
                      Lọc
+                     {showFilters ? (
+                        <ChevronUp className="w-4 h-4 ml-1" />
+                     ) : (
+                        <ChevronDown className="w-4 h-4 ml-1" />
+                     )}
                   </Button>
+
                   <Button variant="ghost">Xuất Excel</Button>
                </div>
             </div>
+
+            {/* Advanced Filters */}
+            {showFilters && (
+               <div className="mt-6 pt-6 border-t border-gray-200">
+                  <label className="block text-sm font-medium text-gray-900 mb-3">
+                     Loại giao dịch
+                  </label>
+
+                  {/* Checkbox nằm ngang */}
+                  <div className="flex flex-wrap gap-x-6 gap-y-3">
+                     {typeOptions.map((option) => (
+                        <label key={option.value} className="flex items-center cursor-pointer">
+                           <input
+                              type="checkbox"
+                              checked={selectedTypes.includes(option.value)}
+                              onChange={(e) => {
+                                 if (e.target.checked) {
+                                    setSelectedTypes([...selectedTypes, option.value]);
+                                 } else {
+                                    setSelectedTypes(
+                                       selectedTypes.filter((t) => t !== option.value)
+                                    );
+                                 }
+                              }}
+                              className="h-4 w-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                           />
+                           <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                        </label>
+                     ))}
+                  </div>
+               </div>
+            )}
          </div>
 
          {/* Products Table */}

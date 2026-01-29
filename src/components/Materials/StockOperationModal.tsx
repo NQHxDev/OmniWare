@@ -204,8 +204,7 @@ export default function StockOperationModal({
                {operationType === 'out' && selectedCount > 1 && (
                   <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                      <p className="text-sm text-yellow-800">
-                        ⚠️ Số lượng xuất sẽ được áp dụng đồng đều cho {selectedCount} biến thể đã
-                        chọn
+                        Số lượng xuất sẽ được áp dụng đồng đều cho {selectedCount} biến thể đã chọn
                      </p>
                   </div>
                )}

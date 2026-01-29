@@ -3,9 +3,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Plus, Search, Filter, Package } from 'lucide-react';
 import Button from '../components/Common/Button';
-import { IUnit, useUnitStore } from '../stores/unit.store';
+import { useUnitStore } from '../stores/unit.store';
 import { Item, useItemStore } from '../stores/item.store';
-import { Variant } from '../stores/variant.store';
 import { useVariantStore } from '../stores/variant.store';
 import MaterialsDetailModal from '@/components/Materials/MaterialsDetailModal';
 import CreateVariantModal from '@/components/Products/CreateVariantModal';
@@ -133,7 +132,7 @@ const Materials = () => {
       try {
          await window.api.createItem(
             itemName,
-            'MA_' + itemCode,
+            itemCode,
             typeId, // = 2 for Materials
             Number(unitId),
             lowStockThreshold
