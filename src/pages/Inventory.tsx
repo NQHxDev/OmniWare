@@ -97,51 +97,6 @@ const Inventory = () => {
          .filter(Boolean);
    }, [units]);
 
-   const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (!itemName.trim()) {
-         alert('Vui lòng nhập tên vật phẩm');
-         return;
-      }
-
-      if (!unitId) {
-         alert('Vui lòng chọn đơn vị tính');
-         return;
-      }
-
-      try {
-         const res = await window.api.createItem(
-            itemName,
-            itemCode,
-            typeId, // = 3 for Inventory
-            Number(unitId),
-            lowStockThreshold
-         );
-
-         // Variant ghosts
-         await window.api.createVariant(
-            res.item_id,
-            itemName,
-            itemCode + '_' + new Date().getTime(),
-            0
-         );
-
-         // reset form
-         setItemName('');
-         setItemCode('');
-         setUnitId(null);
-
-         // đóng modal
-         setIsModalOpen(false);
-
-         // reload danh sách
-         await fetchPage(page, 3);
-      } catch (err) {
-         alert('Lỗi khi thêm vật phẩm: Vui lòng thử lại');
-      }
-   };
-
    const handleUpdateItem = async (
       e: React.FormEvent,
       updatedData: {
@@ -456,19 +411,24 @@ const Inventory = () => {
             </>
          )}
 
-         {/* Add Item Modal */}
+         {/* Add Item Inventory Modal */}
          {(isModalOpen || isModalVisible) && (
             <CreateItemModal
+               page={page}
                title="vật phẩm"
                isModalVisible={isModalVisible}
+               itemName={itemName}
+               itemCode={itemCode}
                unitId={unitId}
+               typeId={typeId}
+               lowStockThreshold={lowStockThreshold}
                setIsModalOpen={setIsModalOpen}
-               handleSubmit={handleSubmit}
                setItemName={setItemName}
                setItemCode={setItemCode}
                setUnitId={setUnitId}
                setLowStockThreshold={setLowStockThreshold}
                unitOptions={unitOptions}
+               fetchPage={fetchPage}
             />
          )}
 

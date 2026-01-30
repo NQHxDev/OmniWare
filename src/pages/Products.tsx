@@ -131,81 +131,6 @@ const Products = () => {
       );
    };
 
-   const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (!itemName.trim()) {
-         alert('Vui lòng nhập tên sản phẩm');
-         return;
-      }
-
-      if (!unitId) {
-         alert('Vui lòng chọn đơn vị tính');
-         return;
-      }
-
-      try {
-         await window.api.createItem(itemName, itemCode, typeId, Number(unitId), lowStockThreshold);
-
-         // reset form
-         setItemName('');
-         setItemCode('');
-         setUnitId(null);
-
-         // đóng modal
-         setIsModalOpen(false);
-
-         // reload danh sách
-         await fetchPage(page, 1);
-      } catch (err) {
-         alert('Lỗi khi thêm sản phẩm: Vui lòng thử lại');
-      }
-   };
-
-   const handleAddVariant = async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (!selectedProduct) return;
-
-      if (!variantName.trim()) {
-         alert('Vui lòng nhập tên biến thể');
-         return;
-      }
-
-      try {
-         const res = await window.api.createVariant(
-            selectedProduct.item_id,
-            variantName,
-            variantCode,
-            variantQuantity
-         );
-
-         await window.api.createTransaction({
-            type: 'create',
-            itemId: selectedProduct.item_id,
-            variantId: res.lastInsertRowid,
-            quantity: variantQuantity,
-         });
-
-         // cập nhật store
-         useVariantStore.getState().addVariant(selectedProduct.item_id, {
-            variant_id: res.lastInsertRowid,
-            variant_name: variantName,
-            variant_code: variantCode,
-            quantity: variantQuantity,
-         });
-
-         setVariantName('');
-         setVariantCode('');
-         setVariantQuantity(0);
-         setIsAddVariantOpen(false);
-
-         await fetchPage(page, 1);
-      } catch (err) {
-         alert('Lỗi khi thêm biến thể: Vui lòng thử lại');
-      }
-   };
-
    const handleUpdateProduct = async (
       e: React.FormEvent,
       updatedData: {
@@ -447,30 +372,37 @@ const Products = () => {
          {/* Add Product Modal */}
          {(isModalOpen || isModalVisible) && (
             <CreateItemModal
+               page={page}
                title="sản phẩm"
                isModalVisible={isModalVisible}
+               itemName={itemName}
+               itemCode={itemCode}
                unitId={unitId}
+               typeId={typeId}
+               lowStockThreshold={lowStockThreshold}
                setIsModalOpen={setIsModalOpen}
-               handleSubmit={handleSubmit}
                setItemName={setItemName}
                setItemCode={setItemCode}
                setUnitId={setUnitId}
                setLowStockThreshold={setLowStockThreshold}
                unitOptions={unitOptions}
+               fetchPage={fetchPage}
             />
          )}
 
          {/* Add Variant Modal */}
          {isAddVariantOpen && (
             <CreateVariantModal
+               page={page}
                selectedItem={selectedProduct}
                variantName={variantName}
                variantCode={variantCode}
+               variantQuantity={variantQuantity}
                setVariantName={setVariantName}
                setVariantCode={setVariantCode}
                setVariantQuantity={setVariantQuantity}
-               handleAddVariant={handleAddVariant}
                setIsAddVariantOpen={setIsAddVariantOpen}
+               fetchPage={fetchPage}
             />
          )}
 

@@ -1,49 +1,81 @@
 import Button from '@/components/Common/Button';
 import Select, { SelectOption } from '@/components/Common/Select';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 type CreateItemProps = {
+   page: number;
    title: string;
    isModalVisible: boolean;
+
+   itemName: string;
+   itemCode: string;
    unitId: string | number | null;
+   typeId: number;
+   lowStockThreshold: number;
 
    setIsModalOpen: (value: boolean) => void;
-   handleSubmit: (e: React.FormEvent) => void;
    setItemName: (itemName: string) => void;
    setItemCode: (itemCode: string) => void;
    setUnitId: (unitId: string | number | null) => void;
    setLowStockThreshold: (lowStock: number) => void;
    unitOptions: SelectOption[];
+   fetchPage: (page: number, type_item: number) => Promise<void>;
 };
 
 export default function CreateItemModal({
+   page,
    title,
    isModalVisible,
+
+   itemName,
+   itemCode,
    unitId,
+   typeId,
+   lowStockThreshold,
+
    setIsModalOpen,
-   handleSubmit,
    setItemName,
    setItemCode,
    setUnitId,
    setLowStockThreshold,
    unitOptions,
+   fetchPage,
 }: CreateItemProps) {
-   const inputRef = useRef<HTMLInputElement>(null);
    const [stockThresholdDefault, setStockThresholdDefault] = useState(-1);
    const [isItemName, setIsItemName] = useState<boolean>(true);
    const [isItemCode, setIsItemCode] = useState<boolean>(true);
    const [itemCodeError, setItemCodeError] = useState<string>('');
 
-   useEffect(() => {
-      if (isModalVisible && inputRef.current) {
-         setTimeout(() => {
-            inputRef.current?.focus();
-            inputRef.current?.select();
-         }, 100);
-      } else {
-         setStockThresholdDefault(-1);
+   const handleCreateItem = async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!itemName.trim()) {
+         alert('Vui lòng nhập tên sản phẩm');
+         return;
       }
-   }, [isModalVisible]);
+
+      if (!unitId) {
+         alert('Vui lòng chọn đơn vị tính');
+         return;
+      }
+
+      try {
+         await window.api.createItem(itemName, itemCode, typeId, Number(unitId), lowStockThreshold);
+
+         // reset form
+         setItemName('');
+         setItemCode('');
+         setUnitId(null);
+
+         // đóng modal
+         setIsModalOpen(false);
+
+         // reload danh sách
+         await fetchPage(page, typeId);
+      } catch (err) {
+         alert('Lỗi khi thêm sản phẩm: Vui lòng thử lại');
+      }
+   };
 
    const checkDuplicateCode = async (code: string) => {
       const isExisted = await window.api.existedItemCode(code);
@@ -89,7 +121,7 @@ export default function CreateItemModal({
 
                {/* Content */}
                <div className="p-6">
-                  <form className="space-y-6" onSubmit={handleSubmit}>
+                  <form className="space-y-6" onSubmit={handleCreateItem}>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                            <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -158,7 +190,7 @@ export default function CreateItemModal({
                               Ngưỡng cảnh báo
                            </label>
                            <input
-                              ref={inputRef}
+                              // ref={inputRef}
                               min="-1"
                               type="text"
                               value={stockThresholdDefault === -1 ? '' : stockThresholdDefault}
@@ -200,7 +232,12 @@ export default function CreateItemModal({
                               Hủy
                            </Button>
                            <Button
-                              disabled={isItemName || isItemCode || !!itemCodeError}
+                              disabled={
+                                 isItemName ||
+                                 isItemCode ||
+                                 itemCode.includes(' ') ||
+                                 !!itemCodeError
+                              }
                               type="submit"
                            >
                               Lưu sản phẩm

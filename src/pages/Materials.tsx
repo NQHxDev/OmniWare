@@ -116,87 +116,6 @@ const Materials = () => {
          .filter(Boolean);
    }, [units]);
 
-   const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (!itemName.trim()) {
-         alert('Vui lòng nhập tên vật tư');
-         return;
-      }
-
-      if (!unitId) {
-         alert('Vui lòng chọn đơn vị tính');
-         return;
-      }
-
-      try {
-         await window.api.createItem(
-            itemName,
-            itemCode,
-            typeId, // = 2 for Materials
-            Number(unitId),
-            lowStockThreshold
-         );
-
-         // reset form
-         setItemName('');
-         setItemCode('');
-         setUnitId(null);
-
-         // đóng modal
-         setIsModalOpen(false);
-
-         // reload danh sách
-         await fetchPage(page, 2);
-      } catch (err) {
-         alert('Lỗi khi thêm vật tư: Vui lòng thử lại');
-      }
-   };
-
-   const handleAddVariant = async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (!selectedMaterial) return;
-
-      if (!variantName.trim()) {
-         alert('Vui lòng nhập tên biến thể');
-         return;
-      }
-
-      try {
-         const res = await window.api.createVariant(
-            selectedMaterial.item_id,
-            variantName,
-            variantCode,
-            variantQuantity
-         );
-
-         await window.api.createTransaction({
-            type: 'create',
-            itemId: selectedMaterial.item_id,
-            variantId: res.lastInsertRowid,
-            quantity: variantQuantity,
-         });
-
-         // cập nhật store
-         useVariantStore.getState().addVariant(selectedMaterial.item_id, {
-            variant_id: res.lastInsertRowid,
-            variant_name: variantName,
-            variant_code: variantCode,
-            quantity: variantQuantity,
-         });
-
-         setVariantName('');
-         setVariantCode('');
-         setVariantQuantity(0);
-         setIsAddVariantOpen(false);
-
-         await fetchPage(page, 2);
-      } catch (err) {
-         alert('Lỗi khi thêm biến thể: Vui lòng thử lại');
-      }
-   };
-
    const handleUpdateMaterial = async (
       e: React.FormEvent,
       updatedData: {
@@ -469,30 +388,37 @@ const Materials = () => {
          {/* Add Material Modal */}
          {(isModalOpen || isModalVisible) && (
             <CreateItemModal
+               page={page}
                title="vật tư"
                isModalVisible={isModalVisible}
+               itemName={itemName}
+               itemCode={itemCode}
                unitId={unitId}
+               typeId={typeId}
+               lowStockThreshold={lowStockThreshold}
                setIsModalOpen={setIsModalOpen}
-               handleSubmit={handleSubmit}
                setItemName={setItemName}
                setItemCode={setItemCode}
                setUnitId={setUnitId}
                setLowStockThreshold={setLowStockThreshold}
                unitOptions={unitOptions}
+               fetchPage={fetchPage}
             />
          )}
 
          {/* Add Variant Modal */}
          {isAddVariantOpen && (
             <CreateVariantModal
+               page={page}
                selectedItem={selectedMaterial}
                variantName={variantName}
                variantCode={variantCode}
+               variantQuantity={variantQuantity}
                setVariantName={setVariantName}
                setVariantCode={setVariantCode}
                setVariantQuantity={setVariantQuantity}
-               handleAddVariant={handleAddVariant}
                setIsAddVariantOpen={setIsAddVariantOpen}
+               fetchPage={fetchPage}
             />
          )}
 
