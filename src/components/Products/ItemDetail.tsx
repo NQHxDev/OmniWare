@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import Button from '@/components/Common/Button';
-import Confirm from '@/components/Common/Confirm';
+import Button from '@/components/common/Button';
+import Confirm from '@/components/common/Confirm';
 import StockOperationModal from '@/components/Materials/StockOperationModal';
 import { Item } from '@/stores/item.store';
 import { useVariantStore, Variant } from '@/stores/variant.store';
@@ -25,8 +25,6 @@ type ItemDetailProps = {
    onOpenAddVariant: () => void;
 
    fetchPage: (page: number, item_type: number) => Promise<void>;
-   onStockIn: () => void;
-   onStockOut: () => void;
 };
 
 export default function ItemDetailModal({

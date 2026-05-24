@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { Minus, Plus, Package } from 'lucide-react';
-import Button from '@/components/Common/Button';
+import Button from '@/components/common/Button';
 import { Item } from '@/stores/item.store';
 
 type InventoryStockModalProps = {

@@ -1,4 +1,4 @@
-import Button from '@/components/Common/Button';
+import Button from '@/components/common/Button';
 import { Item } from '@/stores/item.store';
 import { useVariantStore } from '@/stores/variant.store';
 import { useState } from 'react';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import Button from '../Common/Button';
+import Button from '../common/Button';
 
 interface DeleteItemModalProps {
    isOpen: boolean;

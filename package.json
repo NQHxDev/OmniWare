@@ -64,6 +64,8 @@
    },
    "devDependencies": {
       "@electron/rebuild": "^4.0.2",
+      "concurrently": "^8.2.2",
+      "wait-on": "^7.2.0",
       "@tailwindcss/vite": "^4.1.18",
       "@types/better-sqlite3": "^7.6.13",
       "@types/react": "^18.2.64",

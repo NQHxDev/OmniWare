@@ -1,18 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMemo, useState, useEffect } from 'react';
-import { Plus, Search, Filter, Package, Edit, Trash2, Minus } from 'lucide-react';
-import Button from '../components/Common/Button';
+import { Plus, Filter, Package, Edit, Trash2, Minus } from 'lucide-react';
+import Button from '../components/common/Button';
 import { useUnitStore } from '../stores/unit.store';
 import { Item, useItemStore } from '../stores/item.store';
 import CreateItemModal from '@/components/Products/CreateItemModal';
 import UpdateProductModal from '@/components/Products/UpdateProduct';
-import Confirm from '@/components/Common/Confirm';
+import Confirm from '@/components/common/Confirm';
 import InventoryStockModal from '@/components/Inventory/InventoryStockModal';
-import Table from '@/components/Common/Table';
+import Table from '@/components/common/Table';
+import { useSearchStore } from '@/stores/search.store';
 
 const Inventory = () => {
    // Search and filter states
-   const [searchTerm, setSearchTerm] = useState<string>('');
+   const { debouncedQuery: searchTerm } = useSearchStore();
 
    // Modal states
    const [isModalOpen, setIsModalOpen] = useState(false);
@@ -231,27 +231,8 @@ const Inventory = () => {
 
          {/* Filters and Search */}
          <div className="bg-white rounded-lg shadow p-4 mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
-               <div className="flex-1">
-                  <div className="relative">
-                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                     <input
-                        type="search"
-                        placeholder="Tìm kiếm vật phẩm..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="
-                           w-full
-                           pl-10 pr-4 py-2 border
-                           focus:outline-none
-                           border-gray-300 rounded-lg
-                           focus:ring-2 focus:ring-gray-900
-                           focus:border-transparent
-                           placeholder:text-gray-400
-                        "
-                     />
-                  </div>
-               </div>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+               <div className="text-sm text-gray-500">Hiển thị {filteredItems.length} vật phẩm</div>
                <div className="flex gap-2">
                   <Button variant="secondary" className="flex items-center">
                      <Filter className="h-4 w-4 mr-2" />

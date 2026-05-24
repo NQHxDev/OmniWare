@@ -1,5 +1,5 @@
-import Table from '@/components/Common/Table';
-import Button from '@/components/Common/Button';
+import Table from '@/components/common/Table';
+import Button from '@/components/common/Button';
 import { Edit, Eye, Package, Plus, Trash2 } from 'lucide-react';
 import { Item } from '@/stores/item.store';
 import { useState } from 'react';

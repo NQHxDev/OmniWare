@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import Button from '@/components/Common/Button';
-import Confirm from '@/components/Common/Confirm';
+import Button from '@/components/common/Button';
+import Confirm from '@/components/common/Confirm';
 import StockOperationModal from '@/components/Materials/StockOperationModal';
 import { Item } from '@/stores/item.store';
 import { useVariantStore, Variant } from '@/stores/variant.store';
-import { Minus, PackageOpen, Plus, Search, Trash2, Edit } from 'lucide-react';
+import { Minus, PackageOpen, Plus, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type MaterialsDetailModalProps = {

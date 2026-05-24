@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-   FiSearch,
    FiFilter,
    FiDownload,
    FiRefreshCw,
@@ -10,10 +9,11 @@ import {
    FiClock,
 } from 'react-icons/fi';
 import { FilePlus, PackagePlus, PackageMinus, ChevronDown, ChevronUp } from 'lucide-react';
-import Button from '../components/Common/Button';
+import Button from '../components/common/Button';
 import { useSettingsStore } from '../stores/settingsStore';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { useSearchStore } from '@/stores/search.store';
 
 // Define transaction types
 export type TransactionType = 'create' | 'in' | 'out';
@@ -48,7 +48,7 @@ const Transactions = () => {
    const [total, setTotal] = useState(0);
 
    // Filter states
-   const [searchTerm, setSearchTerm] = useState('');
+   const { debouncedQuery: searchTerm, clearQuery } = useSearchStore();
    const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
    const [selectedItemTypes, setSelectedItemTypes] = useState<(1 | 2 | 3)[]>([]);
    const [dateRange, setDateRange] = useState<{
@@ -125,7 +125,7 @@ const Transactions = () => {
 
    // Clear filters
    const clearFilters = () => {
-      setSearchTerm('');
+      clearQuery();
       setSelectedTypes([]);
       setSelectedItemTypes([]);
       setDateRange({
@@ -247,21 +247,8 @@ const Transactions = () => {
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Search and Filters Bar */}
             <div className="bg-white rounded-lg shadow border border-gray-200 p-4 mb-6">
-               <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                     <div className="relative">
-                        <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                           type="search"
-                           placeholder="Tìm kiếm theo Tên hoặc Mã..."
-                           value={searchTerm}
-                           onChange={(e) => setSearchTerm(e.target.value)}
-                           onKeyPress={(e) => e.key === 'Enter' && applyFilters()}
-                           className="
-                              w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400"
-                        />
-                     </div>
-                  </div>
+               <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div className="text-sm text-gray-500">Hiển thị {total} giao dịch</div>
                   <div className="flex gap-2">
                      <Button
                         variant="secondary"

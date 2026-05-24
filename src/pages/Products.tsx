@@ -1,21 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMemo, useState, useEffect } from 'react';
-import { Plus, Search, Filter, ChevronUp, ChevronDown } from 'lucide-react';
-import Button from '../components/Common/Button';
-import { SelectOption } from '../components/Common/Select';
+import { Plus, Filter, ChevronUp, ChevronDown } from 'lucide-react';
+import Button from '../components/common/Button';
+import { SelectOption } from '../components/common/Select';
 import { useUnitStore } from '../stores/unit.store';
 import { Item, useItemStore } from '../stores/item.store';
-import { Variant } from '../stores/variant.store';
 import { useVariantStore } from '../stores/variant.store';
 import ItemDetailModal from '@/components/Products/ItemDetail';
 import ItemTable from '@/components/Products/ItemTable';
 import CreateVariantModal from '@/components/Products/CreateVariantModal';
 import CreateItemModal from '@/components/Products/CreateItemModal';
 import UpdateProductModal from '@/components/Products/UpdateProduct';
+import { useSearchStore } from '@/stores/search.store';
 
 const Products = () => {
    // Search and filter states
-   const [searchTerm, setSearchTerm] = useState<string>('');
+   const { debouncedQuery: searchTerm } = useSearchStore();
    const [searchVariant, setSearchVariant] = useState<string>('');
 
    // Modal states
@@ -26,13 +25,10 @@ const Products = () => {
 
    // Animation states
    const [showDetail, setShowDetail] = useState<boolean>(false);
-   const [showStockModal, setShowStockModal] = useState<boolean>(false);
 
    // Selection states
    const [selectedProduct, setSelectedProduct] = useState<Item | null>(null);
-   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
    const [selectedVariantIds, setSelectedVariantIds] = useState<number[]>([]);
-   const [stockAction, setStockAction] = useState<'IN' | 'OUT' | null>(null);
    const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
 
    // Data hooks
@@ -223,27 +219,8 @@ const Products = () => {
          {/* Filters and Search */}
          <div className="bg-white rounded-lg shadow p-4 mb-6">
             {/* Top bar */}
-            <div className="flex flex-col md:flex-row gap-4">
-               {/* Search */}
-               <div className="flex-1">
-                  <div className="relative">
-                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                     <input
-                        type="search"
-                        placeholder="Tìm kiếm sản phẩm..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="
-                           w-full pl-10 pr-4 py-2 border
-                           focus:outline-none
-                           border-gray-300 rounded-lg
-                           focus:ring-2 focus:ring-gray-900
-                           focus:border-transparent
-                           placeholder:text-gray-400
-                        "
-                     />
-                  </div>
-               </div>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+               <div className="text-sm text-gray-500">Hiển thị {tableData.length} sản phẩm</div>
 
                {/* Buttons */}
                <div className="flex gap-2">
@@ -308,7 +285,6 @@ const Products = () => {
                fetchPage={fetchPage}
                onViewDetails={async (product) => {
                   setSelectedVariantIds([]);
-                  setSelectedVariant(null);
                   setSelectedProduct(product);
                   setShowDetail(true);
                   await fetchByItem(product.item_id);
@@ -358,14 +334,6 @@ const Products = () => {
                onClose={() => setShowDetail(false)}
                onOpenAddVariant={() => setIsAddVariantOpen(true)}
                fetchPage={fetchPage}
-               onStockIn={() => {
-                  setStockAction('IN');
-                  setShowStockModal(true);
-               }}
-               onStockOut={() => {
-                  setStockAction('OUT');
-                  setShowStockModal(true);
-               }}
             />
          )}
 

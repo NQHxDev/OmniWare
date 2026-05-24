@@ -1,5 +1,5 @@
-import Button from '@/components/Common/Button';
-import Select, { SelectOption } from '@/components/Common/Select';
+import Button from '@/components/common/Button';
+import Select, { SelectOption } from '@/components/common/Select';
 import { useState } from 'react';
 
 type CreateItemProps = {

@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import Button from '@/components/Common/Button';
+import Button from '@/components/common/Button';
 import { Minus, Plus } from 'lucide-react';
 
 type StockOperationModal = {

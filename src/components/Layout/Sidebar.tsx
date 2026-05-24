@@ -36,15 +36,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
       <div className="h-full flex flex-col">
          {/* Logo */}
          <div className="flex items-center h-16 px-4 border-b border-gray-200">
-            <div
-               className={`flex items-center transition-all duration-300 ease-in-out ${isCollapsed ? 'justify-center w-full' : ''}`}
-            >
+            <div className="flex items-center transition-all duration-300 ease-in-out">
                <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shrink-0">
                   <Warehouse className="h-5 w-5 text-white" />
                </div>
 
                <div
-                  className={`overflow-hidden transition-all duration-500 ease-in-out ${isCollapsed ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100 ml-3'}`}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                     isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'
+                  }`}
                >
                   <span className="text-lg font-extrabold text-gray-900 whitespace-nowrap">
                      Tech
@@ -56,9 +56,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
             {/* Nút đóng/mở */}
             <button
                onClick={onToggle}
-               className={`p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-500 ease-in-out ${isCollapsed ? 'absolute top-4 right-3' : 'ml-auto'}`}
+               className={`p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-300 ease-in-out ml-auto ${
+                  isCollapsed ? 'opacity-0 pointer-events-none w-0 h-0 overflow-hidden ml-0' : 'opacity-100'
+               }`}
             >
-               {!isCollapsed && <ChevronLeft className="h-4 w-4 text-gray-500" />}
+               <ChevronLeft className="h-4 w-4 text-gray-500 shrink-0" />
             </button>
          </div>
 
@@ -72,17 +74,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                   <Link
                      key={item.name}
                      to={item.href}
-                     className={`flex items-center rounded-lg text-sm font-medium transition-all duration-50 ease-in-out
+                     className={`flex items-center rounded-lg text-sm font-medium transition-all duration-300 ease-in-out px-3.5 py-3
                         ${isActive ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}
-                        ${isCollapsed ? 'justify-center px-3 py-3' : 'gap-3 px-3 py-3'}
                      `}
                   >
                      <Icon className="h-5 w-5 shrink-0" />
 
                      {/* Text với hiệu ứng mượt mà */}
                      <span
-                        className={`transition-all duration-300 ease-in-out whitespace-nowrap
-                           ${isCollapsed ? 'w-0 opacity-0 ml-0 overflow-hidden' : 'w-auto opacity-100 ml-0'}
+                        className={`transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden
+                           ${isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}
                         `}
                      >
                         {item.name}
@@ -93,9 +94,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
          </nav>
 
          <div
-            className={`overflow-hidden transition-all duration-500 ease-in-out ${isCollapsed ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100 ml-3'}`}
+            className={`overflow-hidden transition-all duration-300 ease-in-out pb-4 ${
+               isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[200px] opacity-100 ml-4'
+            }`}
          >
-            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">
                v1.0.0 @Nguyen Quang Hung
             </span>
          </div>

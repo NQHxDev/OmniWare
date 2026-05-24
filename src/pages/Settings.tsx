@@ -12,7 +12,7 @@ import {
    FiChevronRight,
 } from 'react-icons/fi';
 import { HiOutlineAdjustments, HiOutlineViewGrid } from 'react-icons/hi';
-import Confirm from '../components/Common/Confirm';
+import Confirm from '../components/common/Confirm';
 
 const Settings: React.FC = () => {
    const { settings, isLoaded, updateSettings, resetToDefault, loadSettings } = useSettingsStore();
