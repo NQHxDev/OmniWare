@@ -248,7 +248,7 @@ app.whenReady().then(async () => {
          autoUpdater.checkForUpdatesAndNotify();
       });
       ipcMain.handle('update:install', () => {
-         autoUpdater.quitAndInstall();
+         autoUpdater.quitAndInstall(true, true); // true: chạy chế độ im lặng (silent), true: tự động mở lại app sau khi cài xong
       });
    } catch (error) {
       console.error('Khởi tạo Database thất bại:', error);
