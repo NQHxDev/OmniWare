@@ -156,14 +156,14 @@ const Transactions = () => {
             iconColor: 'text-blue-600',
          },
          in: {
-            label: 'Nhập kho',
+            label: 'Nhập',
             icon: PackagePlus,
             color: 'bg-emerald-100 text-emerald-800',
             borderColor: 'border-emerald-200',
             iconColor: 'text-emerald-600',
          },
          out: {
-            label: 'Xuất kho',
+            label: 'Xuất',
             icon: PackageMinus,
             color: 'bg-amber-100 text-amber-800',
             borderColor: 'border-amber-200',
@@ -191,8 +191,8 @@ const Transactions = () => {
    // Type options
    const typeOptions: { value: TransactionType; label: string }[] = [
       { value: 'create', label: 'Tạo mới' },
-      { value: 'in', label: 'Nhập kho' },
-      { value: 'out', label: 'Xuất kho' },
+      { value: 'in', label: 'Nhập' },
+      { value: 'out', label: 'Xuất' },
    ];
 
    // Item type options

@@ -189,7 +189,7 @@ const Materials = () => {
       return 'normal';
    };
 
-   if (isLoadingItem && page === 1) {
+   if (isLoadingItem && items.length === 0) {
       return (
          <div className="flex items-center justify-center h-64">
             <div className="animate-pulse text-gray-500">Đang tải vật tư...</div>

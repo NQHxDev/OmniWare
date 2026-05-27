@@ -152,17 +152,30 @@ export const ItemRepository = {
    }) {
       try {
          const db = getDb();
+         const createTransaction = db.transaction(() => {
+            const result = db
+               .prepare(
+                  `
+                     INSERT INTO items (item_name, item_code, type_id, unit_id, low_stock_threshold)
+                     VALUES (@item_name, @item_code, @type_id, @unit_id, @low_stock_threshold)
+                  `
+               )
+               .run(data);
 
-         const result = db
-            .prepare(
-               `
-                  INSERT INTO items (item_name, item_code, type_id, unit_id, low_stock_threshold)
-                  VALUES (@item_name, @item_code, @type_id, @unit_id, @low_stock_threshold)
-               `
-            )
-            .run(data);
+            const itemId = Number(result.lastInsertRowid);
 
-         return { item_id: result.lastInsertRowid };
+            // Tự động tạo biến thể mặc định cho nguyên liệu thô (type_id = 3)
+            if (data.type_id === 3) {
+               db.prepare(
+                  `INSERT INTO item_variants (item_id, variant_name, variant_code, quantity)
+                   VALUES (?, ?, ?, 0)`
+               ).run(itemId, data.item_name, data.item_code);
+            }
+
+            return { item_id: itemId };
+         });
+
+         return createTransaction();
       } catch (error) {
          console.error('Create New Item Error:', error);
          throw error;
@@ -223,8 +236,8 @@ export const ItemRepository = {
 
          const updateTransaction = db.transaction(() => {
             const item = db
-               .prepare('SELECT total_quantity FROM items WHERE item_id = ?')
-               .get(itemId) as { total_quantity: number };
+               .prepare('SELECT item_name, item_code, total_quantity FROM items WHERE item_id = ?')
+               .get(itemId) as { item_name: string; item_code: string; total_quantity: number };
 
             if (!item) throw new Error('Sản phẩm không tồn tại');
 
@@ -235,11 +248,21 @@ export const ItemRepository = {
                `UPDATE items SET total_quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE item_id = ?`
             ).run(newQty, itemId);
 
-            const variantItemId = db
-               .prepare('SELECT variant_id FROM item_variants WHERE item_id = ? Limit 1')
-               .get(itemId) as { variant_id: number };
+            let variantItemId = db
+               .prepare('SELECT variant_id FROM item_variants WHERE item_id = ? LIMIT 1')
+               .get(itemId) as { variant_id: number } | undefined;
 
-            if (!variantItemId) throw new Error('Biến thể không tồn tại');
+            if (!variantItemId) {
+               // Tự động sửa lỗi: tạo biến thể mặc định cho sản phẩm chưa có biến thể
+               const insertRes = db
+                  .prepare(
+                     `INSERT INTO item_variants (item_id, variant_name, variant_code, quantity)
+                      VALUES (?, ?, ?, 0)`
+                  )
+                  .run(itemId, item.item_name, item.item_code);
+               
+               variantItemId = { variant_id: Number(insertRes.lastInsertRowid) };
+            }
 
             db.prepare(
                `INSERT INTO stock_history (item_id, variant_id, operation, quantity, previous_quantity, new_quantity)

@@ -118,15 +118,6 @@ const Products = () => {
       );
    };
 
-   const toggleAllVariants = () => {
-      if (!selectedProduct) return;
-
-      const variants = variantsByItem[selectedProduct.item_id] || [];
-      setSelectedVariantIds(
-         selectedVariantIds.length === variants.length ? [] : variants.map((v) => v.variant_id)
-      );
-   };
-
    const handleUpdateProduct = async (
       e: React.FormEvent,
       updatedData: {
@@ -329,7 +320,6 @@ const Products = () => {
                setSearchVariant={setSearchVariant}
                selectedVariantIds={selectedVariantIds}
                toggleVariant={toggleVariant}
-               toggleAllVariants={toggleAllVariants}
                setSelectedVariantIds={setSelectedVariantIds}
                onClose={() => setShowDetail(false)}
                onOpenAddVariant={() => setIsAddVariantOpen(true)}

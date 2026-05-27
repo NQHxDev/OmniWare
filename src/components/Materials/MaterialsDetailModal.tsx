@@ -39,7 +39,44 @@ export default function MaterialsDetailModal({
    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
    const [pendingIds, setPendingIds] = useState<number[]>([]);
 
+   const [selectedSizeFilter, setSelectedSizeFilter] = useState<string | null>(null);
+   const [selectedColorFilter, setSelectedColorFilter] = useState<string | null>(null);
+
    const { clearByItem } = useVariantStore();
+
+   const { sizes, colors } = useMemo(() => {
+      const detectedSizes = new Set<string>();
+      const detectedColors = new Set<string>();
+
+      const itemNameWords = (selectedMaterial?.item_name || '')
+         .toLowerCase()
+         .split(/\s+/)
+         .filter((w) => w.length > 0);
+
+      variants.forEach((v) => {
+         const words = v.variant_name
+            .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '')
+            .split(/\s+/)
+            .filter((w) => w.length > 0);
+
+         words.forEach((word) => {
+            const lowerWord = word.toLowerCase();
+            if (itemNameWords.includes(lowerWord)) return;
+
+            if (/^\d+$/.test(word)) {
+               detectedSizes.add(word);
+            } else {
+               const formattedAttr = word.charAt(0).toUpperCase() + word.slice(1);
+               detectedColors.add(formattedAttr);
+            }
+         });
+      });
+
+      return {
+         sizes: Array.from(detectedSizes).sort((a, b) => Number(a) - Number(b)),
+         colors: Array.from(detectedColors).sort(),
+      };
+   }, [variants, selectedMaterial]);
 
    const handleStockInClick = () => {
       if (selectedVariantIds.length === 0) return;
@@ -96,6 +133,7 @@ export default function MaterialsDetailModal({
       clearByItem(selectedMaterial.item_id);
       await fetchByItem(selectedMaterial.item_id);
       await fetchPage(page, 2);
+      setSelectedVariantIds([]);
       setStockModalOpen(false);
       setStockQuantity(0);
       setSelectedVariantIdForSingle(null);
@@ -138,21 +176,46 @@ export default function MaterialsDetailModal({
    };
 
    const toggleAllVariants = () => {
-      const variants = filteredVariants;
-      setSelectedVariantIds(
-         selectedVariantIds.length === variants.length ? [] : variants.map((v) => v.variant_id)
-      );
+      const isAllSelected =
+         filteredVariants.length > 0 &&
+         filteredVariants.every((v) => selectedVariantIds.includes(v.variant_id));
+
+      if (isAllSelected) {
+         const filteredIds = filteredVariants.map((v) => v.variant_id);
+         setSelectedVariantIds(selectedVariantIds.filter((id) => !filteredIds.includes(id)));
+      } else {
+         const filteredIds = filteredVariants.map((v) => v.variant_id);
+         setSelectedVariantIds(Array.from(new Set([...selectedVariantIds, ...filteredIds])));
+      }
    };
 
    const filteredVariants = useMemo(() => {
-      if (!searchVariant) return variants;
+      let result = variants;
 
-      return variants.filter(
-         (v) =>
-            v.variant_name.toLowerCase().includes(searchVariant.toLowerCase()) ||
-            v.variant_code.toLowerCase().includes(searchVariant.toLowerCase())
-      );
-   }, [variants, searchVariant]);
+      if (searchVariant) {
+         result = result.filter(
+            (v) =>
+               v.variant_name.toLowerCase().includes(searchVariant.toLowerCase()) ||
+               v.variant_code.toLowerCase().includes(searchVariant.toLowerCase())
+         );
+      }
+
+      if (selectedSizeFilter) {
+         result = result.filter((v) => {
+            const words = v.variant_name.split(/\s+/);
+            return words.includes(selectedSizeFilter);
+         });
+      }
+
+      if (selectedColorFilter) {
+         result = result.filter((v) => {
+            const words = v.variant_name.toLowerCase().split(/\s+/);
+            return words.includes(selectedColorFilter.toLowerCase());
+         });
+      }
+
+      return result;
+   }, [variants, searchVariant, selectedSizeFilter, selectedColorFilter]);
 
    const getSelectedCountForModal = () => {
       if (isBulkOperation) {
@@ -259,6 +322,73 @@ export default function MaterialsDetailModal({
                      </Button>
                   </div>
 
+                  {/* Quick Filters */}
+                  {(sizes.length > 0 || colors.length > 0) && (
+                     <div className="flex flex-col gap-2 mb-6 bg-gray-50 p-3 rounded-lg border border-gray-150">
+                        {colors.length > 0 && (
+                           <div className="flex items-center gap-2 flex-wrap text-xs">
+                              <span className="text-gray-500 font-semibold whitespace-nowrap">Màu sắc:</span>
+                              <button
+                                 type="button"
+                                 onClick={() => setSelectedColorFilter(null)}
+                                 className={`px-2.5 py-1 rounded border transition-all ${
+                                    selectedColorFilter === null
+                                       ? 'bg-gray-900 text-white border-gray-900 font-medium'
+                                       : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                                 }`}
+                              >
+                                 Tất cả
+                              </button>
+                              {colors.map((color) => (
+                                 <button
+                                    key={color}
+                                    type="button"
+                                    onClick={() => setSelectedColorFilter(selectedColorFilter === color ? null : color)}
+                                    className={`px-2.5 py-1 rounded border transition-all ${
+                                       selectedColorFilter === color
+                                          ? 'bg-gray-900 text-white border-gray-900 font-medium'
+                                          : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                                    }`}
+                                 >
+                                    {color}
+                                 </button>
+                              ))}
+                           </div>
+                        )}
+
+                        {sizes.length > 0 && (
+                           <div className="flex items-center gap-2 flex-wrap text-xs">
+                              <span className="text-gray-500 font-semibold whitespace-nowrap">Kích thước:</span>
+                              <button
+                                 type="button"
+                                 onClick={() => setSelectedSizeFilter(null)}
+                                 className={`px-2.5 py-1 rounded border transition-all ${
+                                    selectedSizeFilter === null
+                                       ? 'bg-gray-900 text-white border-gray-900 font-medium'
+                                       : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                                 }`}
+                              >
+                                 Tất cả
+                              </button>
+                              {sizes.map((size) => (
+                                 <button
+                                    key={size}
+                                    type="button"
+                                    onClick={() => setSelectedSizeFilter(selectedSizeFilter === size ? null : size)}
+                                    className={`px-2.5 py-1 rounded border transition-all ${
+                                       selectedSizeFilter === size
+                                          ? 'bg-gray-900 text-white border-gray-900 font-medium'
+                                          : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                                    }`}
+                                 >
+                                    {size}
+                                 </button>
+                              ))}
+                           </div>
+                        )}
+                     </div>
+                  )}
+
                   {/* Variant Table */}
                   {filteredVariants.length > 0 ? (
                      <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -270,7 +400,9 @@ export default function MaterialsDetailModal({
                                        type="checkbox"
                                        checked={
                                           filteredVariants.length > 0 &&
-                                          selectedVariantIds.length === filteredVariants.length
+                                          filteredVariants.every((v) =>
+                                             selectedVariantIds.includes(v.variant_id)
+                                          )
                                        }
                                        onChange={toggleAllVariants}
                                     />
@@ -303,8 +435,16 @@ export default function MaterialsDetailModal({
                                        {v.variant_name}
                                     </td>
                                     <td className="px-6 py-4 text-gray-500">{v.variant_code}</td>
-                                    <td className="px-6 py-4 font-bold text-center">
-                                       {v.quantity.toLocaleString()}
+                                    <td className="px-6 py-4 text-center">
+                                       <span className={`inline-block px-2.5 py-1 rounded font-bold text-sm ${
+                                          v.quantity === 0
+                                             ? 'bg-red-50 text-red-600 border border-red-100'
+                                             : v.quantity < 20
+                                             ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                                             : 'text-gray-900'
+                                       }`}>
+                                          {v.quantity.toLocaleString()}
+                                       </span>
                                     </td>
                                     <td className="px-6 py-4">
                                        <div className="flex items-center justify-center gap-2">

@@ -204,13 +204,13 @@ const Inventory = () => {
       }
    };
 
-   if (isLoadingItem && page === 1) {
-      return (
-         <div className="flex items-center justify-center h-64">
-            <div className="animate-pulse text-gray-500">Đang tải vật phẩm kho...</div>
-         </div>
-      );
-   }
+    if (isLoadingItem && items.length === 0) {
+       return (
+          <div className="flex items-center justify-center h-64">
+             <div className="animate-pulse text-gray-500">Đang tải vật phẩm kho...</div>
+          </div>
+       );
+    }
 
    // eslint-disable-next-line @typescript-eslint/no-explicit-any
    const totalValue = (total as any)?.total || 0;
