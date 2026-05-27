@@ -581,7 +581,7 @@ const Settings: React.FC = () => {
                      <div className="p-6 space-y-4">
                         <div className="flex justify-between items-center text-sm">
                            <span className="text-gray-600 font-medium">Phiên bản hiện tại:</span>
-                           <span className="font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">v1.0.0</span>
+                           <span className="font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">v{import.meta.env.PACKAGE_VERSION}</span>
                         </div>
 
                         <div className="text-xs space-y-1">

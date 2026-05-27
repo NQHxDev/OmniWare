@@ -3,8 +3,14 @@ import electron from 'vite-plugin-electron';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
+import fs from 'fs';
+
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
 
 export default defineConfig({
+   define: {
+      'import.meta.env.PACKAGE_VERSION': JSON.stringify(pkg.version),
+   },
    plugins: [
       react(),
       tailwindcss(),

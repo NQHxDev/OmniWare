@@ -34,3 +34,7 @@ release/
 # Vite temporary files
 vite.config.ts.timestamp-*
 
+# SQLite temporary/journal files
+*.sqlite3-shm
+*.sqlite3-wal
+*.sqlite3-journal

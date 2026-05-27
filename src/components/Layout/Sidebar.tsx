@@ -98,8 +98,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[200px] opacity-100 ml-4'
             }`}
          >
-            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">
-               v1.0.0 @Nguyen Quang Hung
+            <span className="text-[11px] font-medium text-gray-400 tracking-wider whitespace-nowrap">
+               v{import.meta.env.PACKAGE_VERSION} @Nguyen Quang Hung
             </span>
          </div>
       </div>
