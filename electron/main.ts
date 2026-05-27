@@ -2,6 +2,7 @@
 import { app, BrowserWindow, Menu } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { autoUpdater } from 'electron-updater';
 import { getDb } from './database/index';
 
 import { ipcMain } from 'electron';
@@ -32,6 +33,18 @@ export const RENDERER_DIST = path.join(appRoot, 'dist');
 const publicPath = VITE_DEV_SERVER_URL ? path.join(appRoot, 'public') : RENDERER_DIST;
 
 let win: BrowserWindow | null;
+
+if (!app.requestSingleInstanceLock()) {
+   app.quit();
+   process.exit(0);
+}
+
+app.on('second-instance', () => {
+   if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+   }
+});
 
 function createWindow() {
    win = new BrowserWindow({
@@ -87,6 +100,45 @@ export const cleanupOldLogs = (retentionMonths: number) => {
       `[LogCleanup] Deleted ${result.changes} log(s) older than ${retentionMonths} month(s)`
    );
 };
+
+// Cấu hình autoUpdater
+autoUpdater.autoDownload = true; // Tự động tải bản cập nhật mới
+autoUpdater.autoInstallOnAppQuit = true; // Cài đặt khi app thoát
+
+function sendUpdateMessage(channel: string, data?: unknown) {
+   if (win && !win.isDestroyed()) {
+      win.webContents.send(channel, data);
+   }
+}
+
+autoUpdater.on('checking-for-update', () => {
+   sendUpdateMessage('update:checking');
+});
+
+autoUpdater.on('update-available', (info) => {
+   sendUpdateMessage('update:available', info);
+});
+
+autoUpdater.on('update-not-available', (info) => {
+   sendUpdateMessage('update:not-available', info);
+});
+
+autoUpdater.on('error', (err) => {
+   sendUpdateMessage('update:error', err ? err.message : 'Unknown error');
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+   sendUpdateMessage('update:download-progress', {
+      percent: progressObj.percent,
+      bytesPerSecond: progressObj.bytesPerSecond,
+      transferred: progressObj.transferred,
+      total: progressObj.total,
+   });
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+   sendUpdateMessage('update:downloaded', info);
+});
 
 app.whenReady().then(async () => {
    try {
@@ -190,10 +242,23 @@ app.whenReady().then(async () => {
       // System
       ipcMain.handle('backup:data', backupData);
       ipcMain.handle('restore:data', restoreData);
+
+      // Auto-update IPC handlers
+      ipcMain.handle('update:check', () => {
+         autoUpdater.checkForUpdatesAndNotify();
+      });
+      ipcMain.handle('update:install', () => {
+         autoUpdater.quitAndInstall();
+      });
    } catch (error) {
       console.error('Khởi tạo Database thất bại:', error);
    }
 
    Menu.setApplicationMenu(null);
    createWindow();
+
+   // Tự động kiểm tra bản cập nhật mới khi app chạy (chỉ chạy ở production build)
+   if (!VITE_DEV_SERVER_URL) {
+      autoUpdater.checkForUpdatesAndNotify();
+   }
 });

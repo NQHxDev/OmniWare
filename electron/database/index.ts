@@ -25,6 +25,12 @@ export function initDb() {
    });
    db.pragma('foreign_keys = ON');
 
+   // Tối ưu hiệu năng SQLite
+   db.pragma('journal_mode = WAL');       // Ghi nhật ký trước (Write-Ahead Logging) giúp tăng tốc độ đọc/ghi đồng thời
+   db.pragma('synchronous = NORMAL');     // Giảm mức độ đồng bộ ổ đĩa mà vẫn đảm bảo an toàn trong WAL mode
+   db.pragma('temp_store = MEMORY');      // Lưu trữ bảng tạm trên RAM thay vì đĩa cứng
+   db.pragma('cache_size = -2000');       // Tăng kích thước bộ nhớ đệm cache lên khoảng 2MB
+
    return { db, dbPath };
 }
 

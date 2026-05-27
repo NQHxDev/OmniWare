@@ -23,6 +23,60 @@ const Settings: React.FC = () => {
    const [showConfirm, setShowConfirm] = useState(false);
    const [confirmAction, setConfirmAction] = useState<() => Promise<void>>(() => async () => {});
 
+   // Trạng thái cập nhật ứng dụng
+   const [updateStatus, setUpdateStatus] = useState<string>('idle'); // idle | checking | available | not-available | downloading | downloaded | error
+   const [downloadProgress, setDownloadProgress] = useState<number>(0);
+   const [updateError, setUpdateError] = useState<string>('');
+   const [latestVersion, setLatestVersion] = useState<string>('');
+
+   useEffect(() => {
+      const handleChecking = () => setUpdateStatus('checking');
+      const handleAvailable = (_event: unknown, info: { version: string }) => {
+         setUpdateStatus('available');
+         setLatestVersion(info.version);
+      };
+      const handleNotAvailable = () => setUpdateStatus('not-available');
+      const handleError = (_event: unknown, errorMsg: string) => {
+         setUpdateStatus('error');
+         setUpdateError(errorMsg);
+      };
+      const handleProgress = (_event: unknown, progress: { percent?: number }) => {
+         setUpdateStatus('downloading');
+         setDownloadProgress(Math.round(progress.percent || 0));
+      };
+      const handleDownloaded = (_event: unknown, info: { version: string }) => {
+         setUpdateStatus('downloaded');
+         setLatestVersion(info.version);
+      };
+
+      // Đăng ký bộ lắng nghe các sự kiện cập nhật từ Electron Main
+      window.ipcRenderer.on('update:checking', handleChecking);
+      window.ipcRenderer.on('update:available', handleAvailable);
+      window.ipcRenderer.on('update:not-available', handleNotAvailable);
+      window.ipcRenderer.on('update:error', handleError);
+      window.ipcRenderer.on('update:download-progress', handleProgress);
+      window.ipcRenderer.on('update:downloaded', handleDownloaded);
+
+      return () => {
+         window.ipcRenderer.off('update:checking', handleChecking);
+         window.ipcRenderer.off('update:available', handleAvailable);
+         window.ipcRenderer.off('update:not-available', handleNotAvailable);
+         window.ipcRenderer.off('update:error', handleError);
+         window.ipcRenderer.off('update:download-progress', handleProgress);
+         window.ipcRenderer.off('update:downloaded', handleDownloaded);
+      };
+   }, []);
+
+   const handleCheckForUpdates = async () => {
+      setUpdateStatus('checking');
+      setUpdateError('');
+      await window.ipcRenderer.invoke('update:check');
+   };
+
+   const handleInstallUpdate = async () => {
+      await window.ipcRenderer.invoke('update:install');
+   };
+
    useEffect(() => {
       if (!isLoaded) {
          loadSettings();
@@ -512,6 +566,69 @@ const Settings: React.FC = () => {
                            onConfirm={handleConfirm}
                            onCancel={handleCancel}
                         />
+                     </div>
+                  </div>
+
+                  {/* Software Update Card */}
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                     <div className="border-b border-gray-200 px-6 py-4 bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                           <FiRotateCcw className="w-5 h-5 text-gray-600" />
+                           <h3 className="text-lg font-semibold text-gray-900">Cập nhật phần mềm</h3>
+                        </div>
+                     </div>
+
+                     <div className="p-6 space-y-4">
+                        <div className="flex justify-between items-center text-sm">
+                           <span className="text-gray-600 font-medium">Phiên bản hiện tại:</span>
+                           <span className="font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">v1.0.0</span>
+                        </div>
+
+                        <div className="text-xs space-y-1">
+                           {updateStatus === 'idle' && (
+                              <p className="text-gray-500">Chưa kiểm tra bản cập nhật mới.</p>
+                           )}
+                           {updateStatus === 'checking' && (
+                              <p className="text-blue-500 animate-pulse font-medium">Đang kiểm tra phiên bản mới từ GitHub...</p>
+                           )}
+                           {updateStatus === 'available' && (
+                              <p className="text-yellow-600 font-medium">Phát hiện phiên bản mới {latestVersion}! Đang tải về...</p>
+                           )}
+                           {updateStatus === 'not-available' && (
+                              <p className="text-green-600 font-medium">Ứng dụng đã là phiên bản mới nhất.</p>
+                           )}
+                           {updateStatus === 'downloading' && (
+                              <div className="space-y-1">
+                                 <p className="text-blue-600 font-medium">Đang tải bản cập nhật: {downloadProgress}%</p>
+                                 <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+                                    <div className="bg-blue-600 h-full rounded-full transition-all duration-300" style={{ width: `${downloadProgress}%` }}></div>
+                                 </div>
+                              </div>
+                           )}
+                           {updateStatus === 'downloaded' && (
+                              <p className="text-green-600 font-semibold">Tải thành công bản {latestVersion}! Sẵn sàng nâng cấp.</p>
+                           )}
+                           {updateStatus === 'error' && (
+                              <p className="text-red-500 font-medium text-wrap break-words">Lỗi cập nhật: {updateError}</p>
+                           )}
+                        </div>
+
+                        {updateStatus !== 'downloaded' ? (
+                           <button
+                              onClick={handleCheckForUpdates}
+                              disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
+                              className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                           >
+                              <span>Kiểm tra cập nhật</span>
+                           </button>
+                        ) : (
+                           <button
+                              onClick={handleInstallUpdate}
+                              className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                           >
+                              <span>Khởi động lại để cập nhật</span>
+                           </button>
+                        )}
                      </div>
                   </div>
 

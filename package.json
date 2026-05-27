@@ -11,7 +11,7 @@
       "build": "tsc && vite build && electron-builder",
       "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
       "preview": "vite preview",
-      "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
+      "electron:dev": "vite",
       "electron:build": "npm run build && electron-builder",
       "build:win": "npm run build && electron-builder --win",
       "build:mac": "npm run build && electron-builder --mac",
@@ -19,6 +19,13 @@
    },
    "build": {
       "appId": "com.warehouse.app",
+      "publish": [
+         {
+            "provider": "github",
+            "owner": "NQHxDev",
+            "repo": "OmniWare"
+         }
+      ],
       "afterPack": "./removeLocales.cjs",
       "productName": "TechWarehouse",
       "directories": {
@@ -52,6 +59,7 @@
       "better-sqlite3": "^12.6.2",
       "date-fns": "4.1.0",
       "dayjs": "1.11.19",
+      "electron-updater": "^6.8.3",
       "electron-vite": "^5.0.0",
       "i": "0.3.7",
       "lucide-react": "^0.563.0",
@@ -64,8 +72,6 @@
    },
    "devDependencies": {
       "@electron/rebuild": "^4.0.2",
-      "concurrently": "^8.2.2",
-      "wait-on": "^7.2.0",
       "@tailwindcss/vite": "^4.1.18",
       "@types/better-sqlite3": "^7.6.13",
       "@types/react": "^18.2.64",
@@ -74,6 +80,7 @@
       "@typescript-eslint/parser": "^7.1.1",
       "@vitejs/plugin-react": "^4.2.1",
       "autoprefixer": "^10.4.23",
+      "concurrently": "^8.2.2",
       "electron": "^30.0.1",
       "electron-builder": "^24.13.3",
       "eslint": "^8.57.0",
@@ -84,7 +91,8 @@
       "typescript": "^5.2.2",
       "vite": "^5.1.6",
       "vite-plugin-electron": "^0.28.6",
-      "vite-plugin-electron-renderer": "^0.14.5"
+      "vite-plugin-electron-renderer": "^0.14.5",
+      "wait-on": "^7.2.0"
    },
    "main": "dist-electron/main.js",
    "overrides": {

@@ -17,23 +17,40 @@ const Dashboard = () => {
       transactions: 0,
    });
 
-   useEffect(() => {
-      const fetchData = async () => {
-         const [pCount, mCount, iCount, tCount] = await Promise.all([
-            window.api.countItem(1),
-            window.api.countItem(2),
-            window.api.countItem(3),
-            window.api.getTodayNetFlow(),
-         ]);
+   const [warningMaterials, setWarningMaterials] = useState<InventoryItemDashboard[]>([]);
+   const [warningInventory, setWarningInventory] = useState<InventoryItemDashboard[]>([]);
+   const [loading, setLoading] = useState(true);
 
-         setCounts({
-            products: pCount.total,
-            materials: mCount.total,
-            inventory: iCount.total,
-            transactions: tCount,
-         });
+   useEffect(() => {
+      const fetchDashboardData = async () => {
+         try {
+            setLoading(true);
+            const [pCount, mCount, iCount, tCount, dataWarningMaterials, dataWarningInventory] = await Promise.all([
+               window.api.countItem(1),
+               window.api.countItem(2),
+               window.api.countItem(3),
+               window.api.getTodayNetFlow(),
+               window.api.getItemLowStock(2),
+               window.api.getItemLowStock(3),
+            ]);
+
+            setCounts({
+               products: pCount.total,
+               materials: mCount.total,
+               inventory: iCount.total,
+               transactions: tCount,
+            });
+
+            setWarningMaterials(dataWarningMaterials);
+            setWarningInventory(dataWarningInventory);
+         } catch (error) {
+            console.error('Lỗi lấy dữ liệu dashboard:', error);
+         } finally {
+            setLoading(false);
+         }
       };
-      fetchData();
+
+      fetchDashboardData();
    }, []);
 
    const stats = [
@@ -62,29 +79,6 @@ const Dashboard = () => {
          icon: RefreshCw,
       },
    ];
-
-   const [warningMaterials, setWarningMaterials] = useState<InventoryItemDashboard[]>([]);
-   const [warningInventory, setWarningInventory] = useState<InventoryItemDashboard[]>([]);
-   const [loading, setLoading] = useState(true);
-
-   useEffect(() => {
-      const fetchLowStock = async () => {
-         try {
-            setLoading(true);
-            const dataWarningMaterials = await window.api.getItemLowStock(2);
-            const warningInventory = await window.api.getItemLowStock(3);
-
-            setWarningMaterials(dataWarningMaterials);
-            setWarningInventory(warningInventory);
-         } catch (error) {
-            console.error('Lỗi lấy dữ liệu cảnh báo:', error);
-         } finally {
-            setLoading(false);
-         }
-      };
-
-      fetchLowStock();
-   }, []);
 
    if (loading) return <div>Đang tải dữ liệu...</div>;
 

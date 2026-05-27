@@ -30,3 +30,7 @@ release/
 *.bat
 *.md
 !README.md
+
+# Vite temporary files
+vite.config.ts.timestamp-*
+

@@ -1,6 +1,3 @@
-# Makefile for TechWarehouse (warehouse_app)
-# Designed for Windows (PowerShell / CMD) and standard environments
-
 .PHONY: install dev build build-win build-portable clean lint rebuild help
 
 # Default target: display help
@@ -21,7 +18,7 @@ install:
 
 # Run application in development mode
 dev:
-	npm run dev
+	npm run electron:dev
 
 # Build the application
 build:

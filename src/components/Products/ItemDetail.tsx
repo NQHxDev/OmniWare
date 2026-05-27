@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import Button from '@/components/common/Button';
 import Confirm from '@/components/common/Confirm';
 import StockOperationModal from '@/components/Materials/StockOperationModal';

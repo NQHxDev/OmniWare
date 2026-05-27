@@ -1,41 +1,69 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getDb } from '..';
 
+// Cache chứa các statement được chuẩn bị trước (prepared statements) để tăng hiệu năng
+let cachedStmts: any = null;
+
+function getCachedStmts() {
+   if (cachedStmts) return cachedStmts;
+   const db = getDb();
+   cachedStmts = {
+      getByItem: db.prepare(`
+         SELECT * FROM item_variants
+         WHERE item_id = ?
+      `),
+      createVariant: db.prepare(`
+         INSERT INTO item_variants (item_id, variant_name, variant_code, quantity)
+         VALUES (@item_id, @variant_name, @variant_code, @quantity)
+      `),
+      updateItemTotalQuantityNamed: db.prepare(`
+         UPDATE items
+         SET total_quantity = total_quantity + @quantity,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE item_id = @item_id
+      `),
+      getVariantById: db.prepare(`
+         SELECT * FROM item_variants
+         WHERE variant_id = ?
+      `),
+      updateVariantQuantity: db.prepare(`
+         UPDATE item_variants
+         SET quantity = ?
+         WHERE variant_id = ?
+      `),
+      updateItemTotalQuantity: db.prepare(`
+         UPDATE items
+         SET total_quantity = total_quantity + ?,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE item_id = ?
+      `),
+      insertHistory: db.prepare(`
+         INSERT INTO stock_history
+         (variant_id, item_id, operation, quantity, previous_quantity, new_quantity, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `),
+      checkCode: db.prepare(`
+         SELECT 1 FROM item_variants
+         WHERE item_id = ? AND variant_code = ?
+         LIMIT 1
+      `),
+   };
+   return cachedStmts;
+}
+
 export const VariantRepository = {
    getByItem(itemId: number) {
-      const db = getDb();
-      return db
-         .prepare(
-            `
-               SELECT * FROM item_variants
-               WHERE item_id = ?
-            `
-         )
-         .all(itemId);
+      return getCachedStmts().getByItem.all(itemId);
    },
 
    create(data: { item_id: number; variant_name: string; variant_code: string; quantity: number }) {
       const db = getDb();
+      const stmts = getCachedStmts();
 
       const transaction = db.transaction((data) => {
-         const info = db
-            .prepare(
-               `
-                  INSERT INTO item_variants (item_id, variant_name, variant_code, quantity)
-                  VALUES (@item_id, @variant_name, @variant_code, @quantity)
-               `
-            )
-            .run(data);
-
+         const info = stmts.createVariant.run(data);
          // Cập nhật bảng items
-         db.prepare(
-            `
-               UPDATE items
-               SET total_quantity = total_quantity + @quantity,
-                  updated_at = CURRENT_TIMESTAMP
-               WHERE item_id = @item_id
-            `
-         ).run(data);
+         stmts.updateItemTotalQuantityNamed.run(data);
          return info;
       });
 
@@ -43,8 +71,7 @@ export const VariantRepository = {
    },
 
    getByItemId(item_id: number) {
-      const db = getDb();
-      return db.prepare(`SELECT * FROM item_variants WHERE item_id = ?`).all(item_id);
+      return getCachedStmts().getByItem.all(item_id);
    },
 
    stockSingleVariant(data: {
@@ -53,15 +80,14 @@ export const VariantRepository = {
       operation: 'in' | 'out'; // 'in' để nhập, 'out' để xuất
    }) {
       const db = getDb();
+      const stmts = getCachedStmts();
 
       // Sử dụng transaction để đảm bảo tính nhất quán
       const transaction = db.transaction((data) => {
          const { variant_id, quantity, operation } = data;
 
-         // Lấy thông tin biến thể và item_id
-         const variant = db
-            .prepare(`SELECT * FROM item_variants WHERE variant_id = ?`)
-            .get(variant_id);
+         // Lấy thông tin biến thể và item_id từ statement đã cache
+         const variant = stmts.getVariantById.get(variant_id);
 
          if (!variant) {
             throw new Error(`Variant with id ${variant_id} not found`);
@@ -82,35 +108,16 @@ export const VariantRepository = {
             operation === 'in' ? currentQuantity + quantity : currentQuantity - quantity;
 
          // Cập nhật số lượng biến thể
-         db.prepare(
-            `
-               UPDATE item_variants
-               SET quantity = ?
-               WHERE variant_id = ?
-            `
-         ).run(newQuantity, variant_id);
+         stmts.updateVariantQuantity.run(newQuantity, variant_id);
 
          // Tính toán thay đổi cho tổng số lượng items
          const quantityChange = operation === 'in' ? quantity : -quantity;
 
          // Cập nhật tổng số lượng trong bảng items
-         db.prepare(
-            `
-               UPDATE items
-               SET total_quantity = total_quantity + ?,
-                  updated_at = CURRENT_TIMESTAMP
-               WHERE item_id = ?
-            `
-         ).run(quantityChange, item_id);
+         stmts.updateItemTotalQuantity.run(quantityChange, item_id);
 
          // Ghi log lịch sử nhập/xuất
-         db.prepare(
-            `
-          INSERT INTO stock_history
-          (variant_id, item_id, operation, quantity, previous_quantity, new_quantity, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        `
-         ).run(variant_id, item_id, operation, quantity, currentQuantity, newQuantity);
+         stmts.insertHistory.run(variant_id, item_id, operation, quantity, currentQuantity, newQuantity);
 
          return {
             variant_id,
@@ -131,16 +138,16 @@ export const VariantRepository = {
       operation: 'in' | 'out';
    }) {
       const db = getDb();
+      const stmts = getCachedStmts();
 
       const transaction = db.transaction((data) => {
          const { variant_ids, quantity, operation } = data;
          const results = [];
+         const itemChanges = new Map<number, number>();
 
          for (const variant_id of variant_ids) {
-            // Lấy thông tin biến thể
-            const variant = db
-               .prepare(`SELECT * FROM item_variants WHERE variant_id = ?`)
-               .get(variant_id);
+            // Lấy thông tin biến thể từ cache
+            const variant = stmts.getVariantById.get(variant_id);
 
             if (!variant) {
                throw new Error(`Variant with id ${variant_id} not found`);
@@ -161,22 +168,10 @@ export const VariantRepository = {
                operation === 'in' ? currentQuantity + quantity : currentQuantity - quantity;
 
             // Cập nhật số lượng biến thể
-            db.prepare(
-               `
-            UPDATE item_variants
-            SET quantity = ?
-            WHERE variant_id = ?
-          `
-            ).run(newQuantity, variant_id);
+            stmts.updateVariantQuantity.run(newQuantity, variant_id);
 
             // Ghi log lịch sử nhập/xuất
-            db.prepare(
-               `
-            INSERT INTO stock_history
-            (variant_id, item_id, operation, quantity, previous_quantity, new_quantity, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-          `
-            ).run(variant_id, item_id, operation, quantity, currentQuantity, newQuantity);
+            stmts.insertHistory.run(variant_id, item_id, operation, quantity, currentQuantity, newQuantity);
 
             results.push({
                variant_id,
@@ -185,31 +180,15 @@ export const VariantRepository = {
                new_quantity: newQuantity,
                operation,
             });
-         }
 
-         // Tính tổng thay đổi cho mỗi item
-         const itemChanges = new Map();
-         for (const variant_id of variant_ids) {
-            const variant = db
-               .prepare(`SELECT item_id FROM item_variants WHERE variant_id = ?`)
-               .get(variant_id);
-
-            const item_id = (variant as any).item_id;
+            // Tích hợp gom nhóm thay đổi số lượng item tại đây, tránh vòng lặp select thừa từ Database
             const change = operation === 'in' ? quantity : -quantity;
-
             itemChanges.set(item_id, (itemChanges.get(item_id) || 0) + change);
          }
 
-         // Cập nhật tổng số lượng cho từng item
+         // Cập nhật tổng số lượng cho từng item bằng statement đã cache
          for (const [item_id, totalChange] of itemChanges.entries()) {
-            db.prepare(
-               `
-                  UPDATE items
-                  SET total_quantity = total_quantity + ?,
-                  updated_at = CURRENT_TIMESTAMP
-                  WHERE item_id = ?
-               `
-            ).run(totalChange, item_id);
+            stmts.updateItemTotalQuantity.run(totalChange, item_id);
          }
 
          return {
@@ -226,12 +205,13 @@ export const VariantRepository = {
 
    deleteVariants(variant_ids: number[]) {
       const db = getDb();
+      const stmts = getCachedStmts();
 
-      // Khai báo transaction. Lưu ý: callback nhận ids
+      // Khai báo transaction
       const executeDelete = db.transaction((ids: number[]) => {
          const placeholders = ids.map(() => '?').join(',');
 
-         // Lấy thông tin
+         // Lấy thông tin (Câu SELECT động nên không cache tĩnh)
          const variants = db
             .prepare(
                `
@@ -250,37 +230,17 @@ export const VariantRepository = {
             itemChanges.set(item_id, (itemChanges.get(item_id) || 0) - quantity);
          });
 
-         // Ghi history
-         const insertHistory = db.prepare(`
-            INSERT INTO stock_history (
-               operation,
-               item_id,
-               variant_id,
-               quantity,
-               previous_quantity,
-               new_quantity,
-               created_at
-            )
-            VALUES ('delete', ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
-         `);
-
+         // Ghi history (Sử dụng statement cache)
          for (const v of variants) {
-            insertHistory.run(v.item_id, v.variant_id, v.quantity, v.quantity);
+            stmts.insertHistory.run(v.variant_id, v.item_id, 'delete', v.quantity, v.quantity, 0);
          }
 
-         // Xóa variants
+         // Xóa variants (SELECT động)
          db.prepare(`DELETE FROM item_variants WHERE variant_id IN (${placeholders})`).run(...ids);
 
-         // Update Items
-         const updateItem = db.prepare(`
-            UPDATE items
-            SET total_quantity = total_quantity + ?,
-               updated_at = CURRENT_TIMESTAMP
-            WHERE item_id = ?
-         `);
-
+         // Update Items (Sử dụng statement cache)
          for (const [item_id, change] of itemChanges.entries()) {
-            updateItem.run(change, item_id);
+            stmts.updateItemTotalQuantity.run(change, item_id);
          }
 
          return { success: true, deleted_count: variants.length };
@@ -291,11 +251,7 @@ export const VariantRepository = {
 
    existedVariantCode(item_id: number, variant_code: string) {
       try {
-         const db = getDb();
-         const row = db
-            .prepare('SELECT 1 FROM item_variants WHERE item_id = ? AND variant_code = ? LIMIT 1')
-            .get(item_id, variant_code);
-
+         const row = getCachedStmts().checkCode.get(item_id, variant_code);
          // Đã tồn tại (true), ngược lại là chưa (false)
          return !!row;
       } catch (error) {
